@@ -1,0 +1,10 @@
+{
+  "installCommand": "npm install",
+  "buildCommand": "npm run build", 
+  "framework": "vite",
+  "outputDirectory": "dist",
+  "rewrites": [{
+    "source": "/((?!sitemap\\.xml|robots\\.txt|manifest\\.json|sw\\.js|sw-notifications\\.js|.*\\.(css|js|png|jpg|jpeg|svg|webp|gif|ico|woff|woff2)).*)", 
+    "destination": "/index.html"
+  }]
+}

@@ -1,0 +1,188 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Line clamp utilities */
+@layer utilities {
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+}
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Dark mode color variables */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+  }
+
+  .dark {
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
+}
+
+body {
+  @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors;
+}
+
+/* Estilos para el contenido HTML del editor */
+/* Negrita - máxima especificidad */
+.prose strong,
+.prose b,
+.prose-sm strong,
+.prose-sm b,
+.prose-lg strong,
+.prose-lg b {
+  font-weight: 700 !important;
+  color: inherit !important;
+}
+
+/* Cursiva */
+.prose em,
+.prose i,
+.prose-sm em,
+.prose-sm i,
+.prose-lg em,
+.prose-lg i {
+  font-style: italic !important;
+  color: inherit !important;
+}
+
+/* Listas */
+.prose ul,
+.prose-sm ul,
+.prose-lg ul {
+  list-style-type: disc !important;
+  padding-left: 2rem !important;
+  margin: 1rem 0 !important;
+}
+
+.prose li,
+.prose-sm li,
+.prose-lg li {
+  margin: 0.5rem 0 !important;
+  display: list-item !important;
+}
+
+/* Enlaces */
+.prose a,
+.prose-sm a,
+.prose-lg a {
+  color: #DC2626 !important;
+  text-decoration: underline !important;
+}
+
+.prose a:hover,
+.prose-sm a:hover,
+.prose-lg a:hover {
+  color: #991B1B !important;
+}
+
+/* Preservar colores inline (etiqueta font) */
+.prose font,
+.prose-sm font,
+.prose-lg font,
+.prose [color],
+.prose-sm [color],
+.prose-lg [color] {
+  /* Los atributos color y style se respetan automáticamente */
+}
+
+/* Preservar alineación */
+.prose [style*="text-align: center"],
+.prose-sm [style*="text-align: center"],
+.prose-lg [style*="text-align: center"] {
+  text-align: center !important;
+}
+
+.prose [style*="text-align: right"],
+.prose-sm [style*="text-align: right"],
+.prose-lg [style*="text-align: right"] {
+  text-align: right !important;
+}
+
+.prose [style*="text-align: left"],
+.prose-sm [style*="text-align: left"],
+.prose-lg [style*="text-align: left"] {
+  text-align: left !important;
+}
+
+
+img {
+  object-position: top;
+}
+
+.fixed {
+  position: fixed;
+}

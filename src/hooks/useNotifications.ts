@@ -18,12 +18,12 @@ export function useNotifications(userId?: string, role?: string) {
   const [isRegistered, setIsRegistered] = useState(false);
 
   useEffect(() => {
-    if (role !== 'admin' || !userId) return;
-    
+    if (!userId) return;
+
     checkPermission();
     checkExistingSubscription();
     setupNotificationListener();
-  }, [userId, role]);
+  }, [userId]);
 
   const checkPermission = async () => {
     if ('Notification' in window) {
@@ -34,7 +34,7 @@ export function useNotifications(userId?: string, role?: string) {
 
   const checkExistingSubscription = async () => {
     if (!userId) return;
-    
+
     const { data } = await supabase
       .from('push_subscriptions')
       .select('*')
@@ -55,7 +55,7 @@ export function useNotifications(userId?: string, role?: string) {
 
     const permission = await Notification.requestPermission();
     setIsPermissionGranted(permission === 'granted');
-    
+
     if (permission === 'granted') {
       await registerPushSubscription();
       return true;
@@ -75,12 +75,12 @@ export function useNotifications(userId?: string, role?: string) {
       const registration = await navigator.serviceWorker.register('/sw-notifications.js', {
         scope: '/'
       });
-      
+
       console.log('[Notifications] Service Worker registrado:', registration);
-      
+
       // Esperar a que el service worker esté activo
       await navigator.serviceWorker.ready;
-      
+
       // Crear suscripción push
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
@@ -159,10 +159,10 @@ export function useNotifications(userId?: string, role?: string) {
     // Escuchar cambios en tiempo real en la tabla notifications
     const subscription = supabase
       .channel('admin_notifications')
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'notifications' 
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications'
       }, (payload) => {
         const notification = payload.new;
         showNotification(notification);
@@ -178,7 +178,7 @@ export function useNotifications(userId?: string, role?: string) {
     if (!isPermissionGranted) return;
 
     const icon = '/ugt-towa-icon-192.png';
-    
+
     new Notification(notification.title, {
       body: notification.message,
       icon: icon,

@@ -1,6 +1,8 @@
 // Edge Function: process-notification-queue (CRON)
 // Procesa la cola de notificaciones pendientes cada minuto
 
+import webpush from "https://esm.sh/web-push@3.6.6";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -22,6 +24,15 @@ Deno.serve(async (req) => {
       'apikey': supabaseServiceKey,
       'Authorization': `Bearer ${supabaseServiceKey}`
     };
+
+    // Configurar VAPID
+    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
+    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
+    const vapidSubject = Deno.env.get('VAPID_SUBJECT') || 'mailto:admin@ugttowa.es';
+
+    if (vapidPublicKey && vapidPrivateKey) {
+      webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+    }
 
     console.log('[Cron] Iniciando procesamiento de cola de notificaciones');
 
@@ -61,7 +72,7 @@ Deno.serve(async (req) => {
 
     if (admins.length === 0) {
       console.log('[Cron] No hay administradores registrados');
-      
+
       // Marcar todas como procesadas (sin destinatarios)
       for (const notif of pendingNotifications) {
         await fetch(
@@ -92,17 +103,17 @@ Deno.serve(async (req) => {
     const prefs = prefsResponse.ok ? await prefsResponse.json() : [];
     const prefsMap = new Map();
     for (const pref of prefs) {
-      prefsMap.set(pref.user_id, pref);
+      prefsMap.set(pref.admin_id, pref);
     }
 
     // 4. Obtener logo activo
-    let iconUrl = '/ugt-towa-icon-192.png';
+    let iconUrl = 'https://ugt-towa.vercel.app/ugt-towa-icon-192.png';
     try {
       const logoResponse = await fetch(
         `${supabaseUrl}/rest/v1/notification_logos?is_active=eq.true&select=logo_url&limit=1`,
         { headers }
       );
-      
+
       if (logoResponse.ok) {
         const logos = await logoResponse.json();
         if (logos && logos.length > 0 && logos[0].logo_url) {
@@ -125,37 +136,19 @@ Deno.serve(async (req) => {
         const eligibleAdmins = [];
         for (const admin of admins) {
           const adminPrefs = prefsMap.get(admin.id);
-          
+
           if (!adminPrefs) {
             eligibleAdmins.push(admin);
             continue;
           }
 
-          if (!adminPrefs.push_enabled) {
+          if (adminPrefs.enabled === false) {
             continue;
           }
 
-          let shouldNotify = false;
-          switch (event_type) {
-            case 'new_appointment':
-              shouldNotify = adminPrefs.notify_new_appointment !== false;
-              break;
-            case 'appointment_modified':
-              shouldNotify = adminPrefs.notify_appointment_modified !== false;
-              break;
-            case 'appointment_cancelled':
-              shouldNotify = adminPrefs.notify_appointment_cancelled !== false;
-              break;
-            case 'status_change':
-              shouldNotify = adminPrefs.notify_appointment_status_change !== false;
-              break;
-            default:
-              shouldNotify = true;
-          }
-
-          if (shouldNotify) {
-            eligibleAdmins.push(admin);
-          }
+          // En la tabla admin_notification_preferences, event_type es el slug del evento
+          // Por ahora, si está habilitado en general para ese admin, lo enviamos
+          eligibleAdmins.push(admin);
         }
 
         // Obtener suscripciones push de los admins elegibles
@@ -169,10 +162,36 @@ Deno.serve(async (req) => {
 
           if (subsResponse.ok) {
             const subscriptions = await subsResponse.json();
-            sentCount = subscriptions.length;
 
-            // En producción: enviar notificación push real a cada suscripción
-            console.log(`[Cron] Enviando notificación a ${sentCount} suscripciones`);
+            if (subscriptions.length > 0 && vapidPublicKey && vapidPrivateKey) {
+              const notificationPayload = JSON.stringify({
+                title: title,
+                body: message,
+                icon: iconUrl,
+                badge: iconUrl,
+                data: { url: `/admin/citas?id=${appointment_id}` }
+              });
+
+              const sendPromises = subscriptions.map(async (sub: any) => {
+                try {
+                  const pushSub = {
+                    endpoint: sub.endpoint,
+                    keys: { p256dh: sub.p256dh, auth: sub.auth }
+                  };
+                  await webpush.sendNotification(pushSub, notificationPayload);
+                  sentCount++;
+                } catch (err: any) {
+                  console.error(`[Cron] Error enviando push a ${sub.id}:`, err);
+                  if (err.statusCode === 410 || err.statusCode === 404) {
+                    await fetch(`${supabaseUrl}/rest/v1/push_subscriptions?id=eq.${sub.id}`, {
+                      method: 'DELETE',
+                      headers
+                    });
+                  }
+                }
+              });
+              await Promise.all(sendPromises);
+            }
           }
 
           // Crear notificación en tabla notifications para cada admin
@@ -189,7 +208,8 @@ Deno.serve(async (req) => {
                   message,
                   read: false,
                   user_email: user_email || null,
-                  user_full_name: user_name || null
+                  user_full_name: user_name || null,
+                  admin_id: admin.id
                 })
               }
             );
@@ -232,7 +252,6 @@ Deno.serve(async (req) => {
 
       } catch (error) {
         console.error(`[Cron] Error procesando notificación ${notification.id}:`, error);
-        // Continuar con la siguiente notificación
       }
     }
 
@@ -245,21 +264,21 @@ Deno.serve(async (req) => {
         sent: totalSent,
         message: `Procesadas ${totalProcessed} notificaciones`
       }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Cron] Error en process-notification-queue:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error.message || 'Error al procesar cola de notificaciones' 
+      JSON.stringify({
+        error: error.message || 'Error al procesar cola de notificaciones'
       }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }

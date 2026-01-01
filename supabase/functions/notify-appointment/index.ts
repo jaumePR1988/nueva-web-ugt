@@ -1,3 +1,5 @@
+import webpush from "https://esm.sh/web-push@3.6.6";
+
 Deno.serve(async (req) => {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -20,20 +22,28 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
+    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
+    const vapidSubject = Deno.env.get('VAPID_SUBJECT') || 'mailto:admin@ugttowa.es';
 
     if (!supabaseUrl || !serviceRoleKey) {
       throw new Error('Configuración de Supabase no disponible');
     }
 
+    if (vapidPublicKey && vapidPrivateKey) {
+      webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+    }
+
+    const headers = {
+      'Authorization': `Bearer ${serviceRoleKey}`,
+      'apikey': serviceRoleKey,
+      'Content-Type': 'application/json'
+    };
+
     // Obtener datos de la cita con información del usuario
     const appointmentResponse = await fetch(
-      `${supabaseUrl}/rest/v1/appointments?id=eq.${appointmentId}&select=*,user:profiles!appointments_user_id_fkey(full_name,email),slot:appointment_slots(*)`,
-      {
-        headers: {
-          'Authorization': `Bearer ${serviceRoleKey}`,
-          'apikey': serviceRoleKey
-        }
-      }
+      `${supabaseUrl}/rest/v1/appointments?id=eq.${appointmentId}&select=*,user:profiles!appointments_user_id_fkey(id,full_name,email),slot:appointment_slots(*)`,
+      { headers }
     );
 
     if (!appointmentResponse.ok) {
@@ -47,132 +57,64 @@ Deno.serve(async (req) => {
 
     const appointment = appointments[0];
     const user = appointment.user;
-    const slot = appointment.slot;
 
-    // Formatear fecha y hora
+    // Formatear detalles para la notificación
     const startDate = new Date(appointment.start_time);
-    const endDate = new Date(appointment.end_time);
-    const dateStr = startDate.toLocaleDateString('es-ES', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-    const timeStr = `${startDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} - ${endDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+    const dateStr = startDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+    const timeStr = startDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
 
-    const delegateTypeNames = {
-      'comite': 'Comité de Empresa',
-      'sindical': 'Delegados Sindicales',
-      'prevencion': 'Prevención de Riesgos Laborales'
-    };
-
-    const delegateTypeName = delegateTypeNames[appointment.delegate_type] || appointment.delegate_type;
-
-    // Preparar contenido del email
-    let emailSubject = '';
-    let emailBodyUser = '';
-    let emailBodyDelegate = '';
+    let pushTitle = '';
+    let pushMessage = '';
 
     if (action === 'confirmed') {
-      emailSubject = 'Confirmación de Cita - UGT Towa';
-      emailBodyUser = `
-        <h2>Cita Confirmada</h2>
-        <p>Hola ${user.full_name},</p>
-        <p>Tu cita ha sido confirmada con los siguientes detalles:</p>
-        <ul>
-          <li><strong>Tipo de delegado:</strong> ${delegateTypeName}</li>
-          <li><strong>Fecha:</strong> ${dateStr}</li>
-          <li><strong>Hora:</strong> ${timeStr}</li>
-        </ul>
-        <p>Te esperamos. Si necesitas cancelar o reprogramar, puedes hacerlo desde el portal.</p>
-        <p><a href="https://x83tsow2k2b8.space.minimax.io/citas">Ver mis citas</a></p>
-        <br>
-        <p>Saludos cordiales,<br>UGT Towa Pharmaceutical Europe</p>
-      `;
-
-      emailBodyDelegate = `
-        <h2>Nueva Cita Reservada</h2>
-        <p>Se ha reservado una nueva cita:</p>
-        <ul>
-          <li><strong>Usuario:</strong> ${user.full_name} (${user.email})</li>
-          <li><strong>Tipo de delegado:</strong> ${delegateTypeName}</li>
-          <li><strong>Fecha:</strong> ${dateStr}</li>
-          <li><strong>Hora:</strong> ${timeStr}</li>
-        </ul>
-        <p><a href="https://x83tsow2k2b8.space.minimax.io/admin/citas">Ver todas las citas</a></p>
-        <br>
-        <p>Sistema de Gestión UGT Towa</p>
-      `;
+      pushTitle = 'Cita Confirmada';
+      pushMessage = `Tu cita del ${dateStr} a las ${timeStr} ha sido confirmada.`;
     } else if (action === 'cancelled') {
-      emailSubject = 'Cita Cancelada - UGT Towa';
-      emailBodyUser = `
-        <h2>Cita Cancelada</h2>
-        <p>Hola ${user.full_name},</p>
-        <p>Tu cita ha sido cancelada:</p>
-        <ul>
-          <li><strong>Tipo de delegado:</strong> ${delegateTypeName}</li>
-          <li><strong>Fecha:</strong> ${dateStr}</li>
-          <li><strong>Hora:</strong> ${timeStr}</li>
-        </ul>
-        <p>Puedes reservar una nueva cita cuando lo necesites.</p>
-        <p><a href="https://x83tsow2k2b8.space.minimax.io/citas">Reservar nueva cita</a></p>
-        <br>
-        <p>Saludos cordiales,<br>UGT Towa Pharmaceutical Europe</p>
-      `;
-
-      emailBodyDelegate = `
-        <h2>Cita Cancelada</h2>
-        <p>Se ha cancelado una cita:</p>
-        <ul>
-          <li><strong>Usuario:</strong> ${user.full_name} (${user.email})</li>
-          <li><strong>Tipo de delegado:</strong> ${delegateTypeName}</li>
-          <li><strong>Fecha:</strong> ${dateStr}</li>
-          <li><strong>Hora:</strong> ${timeStr}</li>
-        </ul>
-        <p><a href="https://x83tsow2k2b8.space.minimax.io/admin/citas">Ver todas las citas</a></p>
-        <br>
-        <p>Sistema de Gestión UGT Towa</p>
-      `;
+      pushTitle = 'Cita Cancelada';
+      pushMessage = `Tu cita del ${dateStr} a las ${timeStr} ha sido cancelada.`;
     }
 
-    // Logs para el usuario (el email real requeriría integración con servicio de email)
-    console.log('=== NOTIFICACIÓN DE CITA ===');
-    console.log('Acción:', action);
-    console.log('Usuario:', user.email);
-    console.log('Asunto:', emailSubject);
-    console.log('Contenido para usuario:', emailBodyUser);
-    console.log('Contenido para delegado:', emailBodyDelegate);
+    // Enviar notificación push si tenemos claves y el usuario tiene suscripciones
+    if (pushTitle && vapidPublicKey && vapidPrivateKey && user?.id) {
+      const subsResponse = await fetch(
+        `${supabaseUrl}/rest/v1/push_subscriptions?user_id=eq.${user.id}&select=*`,
+        { headers }
+      );
 
-    // Sistema de notificaciones por email removido durante limpieza
-    // Solo registramos el evento en logs para seguimiento
-    console.log('Notificación registrada para:', {
-      userEmail: user.email,
-      subject: emailSubject,
-      type: action,
-      timestamp: new Date().toISOString()
-    });
+      if (subsResponse.ok) {
+        const subscriptions = await subsResponse.json();
+        const notificationPayload = JSON.stringify({
+          title: pushTitle,
+          body: pushMessage,
+          icon: 'https://ugt-towa.vercel.app/ugt-towa-icon-192.png',
+          data: { url: '/citas' }
+        });
+
+        for (const sub of subscriptions) {
+          try {
+            const pushSub = {
+              endpoint: sub.endpoint,
+              keys: { p256dh: sub.p256dh, auth: sub.auth }
+            };
+            await webpush.sendNotification(pushSub, notificationPayload);
+          } catch (err: any) {
+            console.error(`Error enviando push a ${sub.id}:`, err);
+          }
+        }
+      }
+    }
 
     return new Response(JSON.stringify({
-      data: {
-        success: true,
-        message: 'Notificación procesada correctamente',
-        appointmentId: appointmentId,
-        action: action,
-        userEmail: user.email
-      }
+      success: true,
+      message: 'Notificación procesada',
+      action
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error en notificación de cita:', error);
-
-    return new Response(JSON.stringify({
-      error: {
-        code: 'NOTIFICATION_ERROR',
-        message: error.message
-      }
-    }), {
+    return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

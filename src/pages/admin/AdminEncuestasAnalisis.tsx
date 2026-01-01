@@ -50,7 +50,7 @@ export default function AdminEncuestasAnalisis() {
 
   async function loadSurveysAndAnalyze() {
     setLoading(true);
-    
+
     // Cargar todas las encuestas
     const { data: surveysData, error: surveysError } = await supabase
       .from('surveys')
@@ -213,8 +213,8 @@ export default function AdminEncuestasAnalisis() {
 
         Object.entries(analysis.optionLabels).forEach(([optionId, label]) => {
           const count = analysis.optionCounts[parseInt(optionId)];
-          const percentage = analysis.totalResponses > 0 
-            ? ((count / analysis.totalResponses) * 100).toFixed(1) 
+          const percentage = analysis.totalResponses > 0
+            ? ((count / analysis.totalResponses) * 100).toFixed(1)
             : '0.0';
 
           pdf.setFontSize(9);
@@ -236,18 +236,18 @@ export default function AdminEncuestasAnalisis() {
                 useCORS: true,
                 backgroundColor: '#ffffff'
               });
-              
+
               const imgData = canvas.toDataURL('image/png');
               // Reducir tamaño a 100mm de ancho (aproximadamente la mitad de la página)
               const imgWidth = 100;
               const imgHeight = (canvas.height * imgWidth) / canvas.width;
-              
+
               // Verificar si hay suficiente espacio en la página
               if (yPosition + imgHeight > pageHeight - 20) {
                 pdf.addPage();
                 yPosition = 20;
               }
-              
+
               // Centrar gráfico horizontalmente
               const xPosition = (pageWidth - imgWidth) / 2;
               pdf.addImage(imgData, 'PNG', xPosition, yPosition, imgWidth, imgHeight);
@@ -299,7 +299,7 @@ export default function AdminEncuestasAnalisis() {
 
         Object.entries(analysis.optionLabels).forEach(([optionId, label]) => {
           const count = analysis.optionCounts[parseInt(optionId)];
-          const percentage = analysis.totalResponses > 0 
+          const percentage = analysis.totalResponses > 0
             ? ((count / analysis.totalResponses) * 100).toFixed(1) + '%'
             : '0.0%';
           sheetData.push([label, count.toString(), percentage]);
@@ -311,7 +311,7 @@ export default function AdminEncuestasAnalisis() {
 
       // Hoja de respuestas individuales
       const allResponsesData = [['ID Encuesta', 'Pregunta', 'Opción Seleccionada', 'Fecha']];
-      
+
       analyses.forEach((analysis) => {
         analysis.responses.forEach((response) => {
           const optionLabel = analysis.optionLabels[response.selected_option_id] || 'Desconocida';
@@ -336,156 +336,161 @@ export default function AdminEncuestasAnalisis() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f8fafc]">
       <Navbar />
       <div className="container mx-auto px-4 py-12">
-        <div className="flex items-center justify-between mb-8">
+        {/* Encabezado */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <div className="flex items-center">
-            <BarChart3 className="h-8 w-8 text-red-600 mr-3" />
-            <h1 className="text-3xl font-bold text-gray-900">Análisis de Encuestas</h1>
+            <div className="p-4 bg-red-600 rounded-2xl shadow-xl shadow-red-200 mr-5">
+              <BarChart3 className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs mb-1">Métricas de Participación</p>
+              <h1 className="text-4xl font-black text-gray-900 tracking-tight">Análisis de Encuestas</h1>
+            </div>
           </div>
           {analyses.length > 0 && (
             <div className="flex gap-3">
               <button
                 onClick={exportToPDF}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center gap-2"
+                className="bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest text-[10px] py-4 px-6 rounded-2xl transition-all shadow-xl shadow-red-200 flex items-center group"
               >
-                <FileText className="h-4 w-4" />
+                <FileText className="h-4 w-4 mr-2 group-hover:-translate-y-0.5 transition-transform" />
                 Exportar PDF
               </button>
               <button
                 onClick={exportToExcel}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+                className="bg-green-600 hover:bg-green-700 text-white font-black uppercase tracking-widest text-[10px] py-4 px-6 rounded-2xl transition-all shadow-xl shadow-green-100 flex items-center group"
               >
-                <FileSpreadsheet className="h-4 w-4" />
-                Exportar Excel
+                <FileSpreadsheet className="h-4 w-4 mr-2 group-hover:-translate-y-0.5 transition-transform" />
+                Excel Data
               </button>
             </div>
           )}
         </div>
 
         {loading ? (
-          <div className="bg-white rounded-lg shadow-md p-12 text-center">
-            <p className="text-gray-500">Cargando análisis...</p>
+          <div className="text-center py-20 bg-white rounded-[2rem] border border-gray-100 shadow-sm">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-600 border-t-transparent mx-auto mb-4"></div>
+            <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">Analizando datos...</p>
           </div>
         ) : analyses.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-md p-12 text-center">
-            <BarChart3 className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-xl text-gray-500">No hay encuestas para analizar</p>
-            <p className="text-gray-400 mt-2">Crea encuestas desde el panel de administración</p>
+          <div className="text-center py-20 bg-white rounded-[2rem] border border-gray-100 shadow-sm px-8">
+            <BarChart3 className="h-16 w-16 text-gray-100 mx-auto mb-4" />
+            <p className="text-gray-500 font-medium text-lg">No hay encuestas para analizar</p>
+            <p className="text-gray-400 mt-2 font-medium">Crea encuestas desde el panel de gestión para ver aquí los resultados detallados.</p>
           </div>
         ) : (
           <>
             {/* Resumen General */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <p className="text-sm text-gray-600 mb-1">Total Encuestas</p>
-                <p className="text-3xl font-bold text-gray-900">{analyses.length}</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+              <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest leading-none mb-3">Total Encuestas</p>
+                <p className="text-4xl font-black text-gray-900">{analyses.length}</p>
               </div>
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <p className="text-sm text-gray-600 mb-1">Total Respuestas</p>
-                <p className="text-3xl font-bold text-gray-900">
+              <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 border-l-4 border-l-red-600">
+                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest leading-none mb-3">Votos Acumulados</p>
+                <p className="text-4xl font-black text-red-600">
                   {analyses.reduce((sum, a) => sum + a.totalResponses, 0)}
                 </p>
               </div>
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <p className="text-sm text-gray-600 mb-1">Promedio de Participación</p>
-                <p className="text-3xl font-bold text-gray-900">
+              <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 text-right">
+                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest leading-none mb-3">Promedio Participación</p>
+                <p className="text-4xl font-black text-gray-900">
                   {analyses.length > 0
                     ? (
-                        analyses.reduce((sum, a) => sum + a.totalResponses, 0) / analyses.length
-                      ).toFixed(1)
+                      analyses.reduce((sum, a) => sum + a.totalResponses, 0) / analyses.length
+                    ).toFixed(1)
                     : '0'}
                 </p>
               </div>
             </div>
 
             {/* Análisis Individual por Encuesta */}
-            <div className="space-y-8">
+            <div className="space-y-12">
               {analyses.map((analysis, index) => (
-                <div key={analysis.survey.id} className="bg-white rounded-lg shadow-md p-6">
-                  <div className="mb-6">
-                    <div className="flex items-start justify-between">
+                <div key={analysis.survey.id} className="bg-white rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100 p-10">
+                  <div className="mb-10 border-b border-gray-100 pb-8">
+                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
                       <div className="flex-1">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                          {analysis.survey.question}
-                        </h2>
-                        <div className="flex gap-4 text-sm text-gray-600">
-                          <span>
-                            Estado:{' '}
-                            <span
-                              className={`font-semibold ${
-                                analysis.survey.is_active ? 'text-green-600' : 'text-gray-500'
-                              }`}
-                            >
-                              {analysis.survey.is_active ? 'Activa' : 'Inactiva'}
-                            </span>
+                        <div className="flex items-center gap-3 mb-4">
+                          <span className={`px-4 py-1 text-[10px] font-black uppercase tracking-widest rounded-full ${analysis.survey.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-400'
+                            }`}>
+                            {analysis.survey.is_active ? 'Encuesta Activa' : 'Finalizada'}
                           </span>
-                          <span>
-                            Creada:{' '}
-                            {format(
-                              new Date(analysis.survey.created_at),
-                              "d 'de' MMM, yyyy",
-                              { locale: es }
-                            )}
-                          </span>
-                          <span className="font-semibold text-red-600">
-                            {analysis.totalResponses} respuestas
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                            Creada: {format(new Date(analysis.survey.created_at), "dd/MM/yyyy", { locale: es })}
                           </span>
                         </div>
+                        <h2 className="text-3xl font-black text-gray-900 leading-tight mb-4">
+                          {analysis.survey.question}
+                        </h2>
+                      </div>
+                      <div className="bg-red-50 px-8 py-5 rounded-[2rem] text-center min-w-[160px]">
+                        <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-1">Participación</p>
+                        <p className="text-3xl font-black text-red-600">{analysis.totalResponses}</p>
+                        <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest">votos totales</p>
                       </div>
                     </div>
                   </div>
 
                   {analysis.totalResponses > 0 ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                       {/* Gráfico de Pastel */}
-                      <div>
-                        <h3 className="text-lg font-semibold mb-4 text-gray-700">
-                          Distribución de Respuestas
+                      <div className="flex flex-col items-center">
+                        <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-8 w-full text-center">
+                          Distribución Visual de Votos
                         </h3>
-                        <div className="flex justify-center">
-                          <div 
-                            ref={el => chartRefs.current[`chart-${index}`] = el}
-                            className="w-80 h-80"
-                          >
-                            <Pie 
-                              data={getChartData(analysis)} 
-                              options={{
-                                responsive: true,
-                                maintainAspectRatio: true,
-                                plugins: {
-                                  legend: {
-                                    position: 'bottom',
-                                  },
+                        <div
+                          ref={el => chartRefs.current[`chart-${index}`] = el}
+                          className="w-full max-w-[320px] aspect-square"
+                        >
+                          <Pie
+                            data={getChartData(analysis)}
+                            options={{
+                              responsive: true,
+                              maintainAspectRatio: true,
+                              plugins: {
+                                legend: {
+                                  position: 'bottom',
+                                  labels: {
+                                    font: {
+                                      family: 'system-ui',
+                                      weight: 'bold',
+                                      size: 11
+                                    },
+                                    padding: 20,
+                                    usePointStyle: true
+                                  }
                                 },
-                              }}
-                            />
-                          </div>
+                              },
+                            }}
+                          />
                         </div>
                       </div>
 
                       {/* Tabla de Resultados */}
-                      <div>
-                        <h3 className="text-lg font-semibold mb-4 text-gray-700">
-                          Detalle de Resultados
+                      <div className="bg-gray-50 rounded-[2rem] p-8">
+                        <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6 ml-2">
+                          Métricas por Opción
                         </h3>
-                        <div className="overflow-hidden border border-gray-200 rounded-lg">
+                        <div className="overflow-hidden bg-white rounded-3xl border border-gray-100 shadow-sm">
                           <table className="w-full">
-                            <thead className="bg-gray-50">
-                              <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            <thead>
+                              <tr className="bg-gray-100/50 border-b border-gray-100">
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
                                   Opción
                                 </th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                                <th className="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
                                   Votos
                                 </th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                                <th className="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
                                   %
                                 </th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-200">
+                            <tbody className="divide-y divide-gray-100">
                               {Object.entries(analysis.optionLabels).map(([optionId, label]) => {
                                 const count = analysis.optionCounts[parseInt(optionId)];
                                 const percentage =
@@ -494,12 +499,12 @@ export default function AdminEncuestasAnalisis() {
                                     : '0.0';
 
                                 return (
-                                  <tr key={optionId} className="hover:bg-gray-50">
-                                    <td className="px-4 py-3 text-sm text-gray-900">{label}</td>
-                                    <td className="px-4 py-3 text-sm text-center font-semibold text-gray-900">
+                                  <tr key={optionId} className="hover:bg-gray-50/50 transition-colors">
+                                    <td className="px-6 py-4 text-sm font-bold text-gray-900">{label}</td>
+                                    <td className="px-6 py-4 text-sm text-center font-black text-gray-900">
                                       {count}
                                     </td>
-                                    <td className="px-4 py-3 text-sm text-center font-semibold text-red-600">
+                                    <td className="px-6 py-4 text-sm text-center font-black text-red-600">
                                       {percentage}%
                                     </td>
                                   </tr>

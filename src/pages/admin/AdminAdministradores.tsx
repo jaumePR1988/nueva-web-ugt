@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import { supabase, Profile } from '@/lib/supabase';
 import { Shield, Search, UserPlus, Trash2, ArrowUp } from 'lucide-react';
 import { toast } from 'sonner';
@@ -16,7 +17,7 @@ export default function AdminAdministradores() {
   const [showDemoteModal, setShowDemoteModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [processing, setProcessing] = useState(false);
-  
+
   // Formulario para crear admin
   const [newAdmin, setNewAdmin] = useState({
     email: '',
@@ -92,7 +93,7 @@ export default function AdminAdministradores() {
 
   async function createAdmin(e: React.FormEvent) {
     e.preventDefault();
-    
+
     if (!newAdmin.email || !newAdmin.fullName || !newAdmin.password) {
       toast.error('Todos los campos son requeridos');
       return;
@@ -151,84 +152,81 @@ export default function AdminAdministradores() {
   const adminUsers = filteredUsers.filter(u => u.role === 'admin');
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f8fafc]">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-12">
         {/* Encabezado */}
-        <div className="mb-8">
-          <Link to="/admin/dashboard" className="text-red-600 hover:text-red-700 mb-4 inline-block">
-            Volver al Panel de Administración
-          </Link>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <Shield className="h-8 w-8 text-red-600" />
-              <h1 className="text-3xl font-bold text-gray-900">Gestión de Administradores</h1>
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+          <div className="flex items-center">
+            <div className="p-4 bg-red-600 rounded-2xl shadow-xl shadow-red-200 mr-5">
+              <Shield className="h-8 w-8 text-white" />
             </div>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-            >
-              <UserPlus className="h-5 w-5 mr-2" />
-              Crear Administrador
-            </button>
+            <div>
+              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs mb-1">Seguridad del Sistema</p>
+              <h1 className="text-4xl font-black text-gray-900 tracking-tight">Gestión de Administradores</h1>
+            </div>
           </div>
-          <p className="text-gray-600">
-            Gestiona los administradores del sistema: promociona usuarios, crea nuevos administradores o remueve permisos.
-          </p>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest text-xs py-4 px-8 rounded-2xl transition-all shadow-xl shadow-red-200 flex items-center group"
+          >
+            <UserPlus className="h-4 w-4 mr-3 group-hover:-translate-y-1 transition-transform" />
+            Nuevo Administrador
+          </button>
         </div>
 
         {/* Estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total de Usuarios</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{users.length}</p>
-              </div>
-              <Shield className="h-12 w-12 text-blue-200" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 flex items-center">
+            <div className="p-4 bg-gray-50 rounded-2xl mr-6">
+              <Shield className="h-6 w-6 text-gray-400" />
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest leading-none mb-2">Total Usuarios</p>
+              <p className="text-3xl font-black text-gray-900">{users.length}</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Administradores</p>
-                <p className="text-3xl font-bold text-red-600 mt-2">{adminCount}</p>
-              </div>
-              <Shield className="h-12 w-12 text-red-200" />
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 flex items-center">
+            <div className="p-4 bg-red-50 rounded-2xl mr-6">
+              <Shield className="h-6 w-6 text-red-600" />
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest leading-none mb-2">Administradores</p>
+              <p className="text-3xl font-black text-red-600">{adminCount}</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Usuarios Regulares</p>
-                <p className="text-3xl font-bold text-gray-600 mt-2">{users.length - adminCount}</p>
-              </div>
-              <Shield className="h-12 w-12 text-gray-200" />
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 flex items-center border-l-4 border-l-green-600">
+            <div className="p-4 bg-green-50 rounded-2xl mr-6">
+              <Shield className="h-6 w-6 text-green-600" />
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest leading-none mb-2">Usuarios Regulares</p>
+              <p className="text-3xl font-black text-gray-600">{users.length - adminCount}</p>
             </div>
           </div>
         </div>
 
         {/* Búsqueda */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 mb-8">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-6 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
               placeholder="Buscar por nombre o email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
+              className="w-full pl-14 pr-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-red-600 transition-all font-medium text-gray-900"
             />
           </div>
         </div>
 
         {/* Lista de Administradores */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
-          <div className="bg-gray-50 px-6 py-4 border-b">
-            <h2 className="text-lg font-semibold text-gray-900">Administradores Actuales</h2>
+        <div className="bg-white rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden mb-12">
+          <div className="bg-gray-50/50 px-8 py-5 border-b border-gray-100">
+            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Administradores del Sistema</h2>
           </div>
           {loading ? (
             <div className="text-center py-12">
@@ -241,47 +239,45 @@ export default function AdminAdministradores() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Nombre
+                <thead>
+                  <tr className="bg-gray-50/50">
+                    <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                      Nombre / Email
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
+                    <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                      Fecha Alta
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Fecha de Registro
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-8 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">
                       Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-100">
                   {adminUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                    <tr key={user.id} className="hover:bg-gray-50/50 transition-colors group">
+                      <td className="px-8 py-5">
                         <div className="flex items-center">
-                          <Shield className="h-5 w-5 text-red-600 mr-2" />
-                          <span className="text-sm font-medium text-gray-900">{user.full_name}</span>
+                          <div className="p-2 bg-red-50 rounded-lg mr-4 group-hover:bg-red-600 transition-colors">
+                            <Shield className="h-4 w-4 text-red-600 group-hover:text-white transition-colors" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-900">{user.full_name}</p>
+                            <p className="text-xs text-gray-400 font-medium">{user.email}</p>
+                          </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600">{user.email}</div>
+                      <td className="px-8 py-5 text-sm font-bold text-gray-600">
+                        {user.created_at && format(new Date(user.created_at), "dd/MM/yyyy", { locale: es })}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {user.created_at && format(new Date(user.created_at), "d MMM yyyy", { locale: es })}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-8 py-5 text-right">
                         <button
                           onClick={() => {
                             setSelectedUser(user);
                             setShowDemoteModal(true);
                           }}
-                          className="inline-flex items-center px-3 py-1 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700 transition"
+                          className="px-4 py-2 bg-orange-50 text-orange-700 hover:bg-orange-600 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
                         >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Remover Admin
+                          Revocar Acceso
                         </button>
                       </td>
                     </tr>
@@ -293,10 +289,9 @@ export default function AdminAdministradores() {
         </div>
 
         {/* Lista de Usuarios Regulares para Promover */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="bg-gray-50 px-6 py-4 border-b">
-            <h2 className="text-lg font-semibold text-gray-900">Usuarios Regulares</h2>
-            <p className="text-sm text-gray-600 mt-1">Promociona usuarios a administradores</p>
+        <div className="bg-white rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+          <div className="bg-gray-50/50 px-8 py-5 border-b border-gray-100">
+            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Base de Usuarios (No Admins)</h2>
           </div>
           {loading ? (
             <div className="text-center py-12">
@@ -309,49 +304,42 @@ export default function AdminAdministradores() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Nombre
+                <thead>
+                  <tr className="bg-gray-50/50">
+                    <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                      Nombre / Email
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
+                    <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                      Estado
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Afiliado
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-8 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">
                       Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-100">
                   {nonAdminUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{user.full_name}</div>
+                    <tr key={user.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-8 py-5">
+                        <p className="text-sm font-bold text-gray-900">{user.full_name}</p>
+                        <p className="text-xs text-gray-400 font-medium">{user.email}</p>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600">{user.email}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          user.is_affiliate
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {user.is_affiliate ? 'Sí' : 'No'}
+                      <td className="px-8 py-5">
+                        <span className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-xl ${user.is_affiliate
+                          ? 'bg-green-50 text-green-700'
+                          : 'bg-gray-100 text-gray-400'
+                          }`}>
+                          {user.is_affiliate ? 'Afiliado Confirmado' : 'Pendiente'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-8 py-5 text-right">
                         <button
                           onClick={() => {
                             setSelectedUser(user);
                             setShowPromoteModal(true);
                           }}
-                          className="inline-flex items-center px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition"
+                          className="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
                         >
-                          <ArrowUp className="h-4 w-4 mr-1" />
                           Promover a Admin
                         </button>
                       </td>
@@ -366,57 +354,66 @@ export default function AdminAdministradores() {
 
       {/* Modal: Crear Administrador */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Crear Nuevo Administrador</h3>
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl p-10 max-w-md w-full animate-in fade-in zoom-in duration-300">
+            <div className="flex items-center mb-8">
+              <div className="p-3 bg-red-600 rounded-2xl mr-4 shadow-lg shadow-red-200">
+                <UserPlus className="h-6 w-6 text-white" />
+              </div>
+              <h3 className="text-2xl font-black text-gray-900 tracking-tight">Nuevo Administrador</h3>
+            </div>
+
             <form onSubmit={createAdmin}>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">
                     Nombre Completo
                   </label>
                   <input
                     type="text"
                     value={newAdmin.fullName}
                     onChange={(e) => setNewAdmin({ ...newAdmin, fullName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
+                    className="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-red-600 font-medium text-gray-900 transition-all"
+                    placeholder="Nombre y apellidos"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email (@towapharmaceutical.com)
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">
+                    Email Corporativo (@towapharmaceutical.com)
                   </label>
                   <input
                     type="email"
                     value={newAdmin.email}
                     onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
+                    className="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-red-600 font-medium text-gray-900 transition-all"
+                    placeholder="usuario@towapharmaceutical.com"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contraseña
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">
+                    Contraseña Temporal
                   </label>
                   <input
                     type="password"
                     value={newAdmin.password}
                     onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
+                    className="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-red-600 font-medium text-gray-900 transition-all"
+                    placeholder="••••••••"
                     minLength={6}
                     required
                   />
-                  <p className="text-xs text-gray-500 mt-1">Mínimo 6 caracteres</p>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2 ml-1">Mínimo 6 caracteres</p>
                 </div>
               </div>
-              <div className="flex space-x-3 mt-6">
+              <div className="flex flex-col gap-3 mt-10">
                 <button
                   type="submit"
                   disabled={processing}
-                  className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                  className="w-full bg-red-600 text-white font-black uppercase tracking-widest text-xs py-5 rounded-2xl hover:bg-red-700 disabled:opacity-50 transition-all shadow-xl shadow-red-200"
                 >
-                  {processing ? 'Creando...' : 'Crear Administrador'}
+                  {processing ? 'Procesando...' : 'Dar de Alta'}
                 </button>
                 <button
                   type="button"
@@ -425,7 +422,7 @@ export default function AdminAdministradores() {
                     setNewAdmin({ email: '', fullName: '', password: '' });
                   }}
                   disabled={processing}
-                  className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 disabled:opacity-50"
+                  className="w-full bg-gray-50 text-gray-500 font-black uppercase tracking-widest text-xs py-5 rounded-2xl hover:bg-gray-100 disabled:opacity-50 transition-all"
                 >
                   Cancelar
                 </button>
@@ -437,20 +434,23 @@ export default function AdminAdministradores() {
 
       {/* Modal: Promover a Administrador */}
       {showPromoteModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Promover a Administrador</h3>
-            <p className="text-gray-600 mb-6">
-              ¿Está seguro de que desea promover a <strong>{selectedUser.full_name}</strong> a administrador?
-              Este usuario tendrá acceso completo al panel de administración.
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl p-10 max-w-md w-full animate-in fade-in zoom-in duration-300 text-center">
+            <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Shield className="h-10 w-10 text-green-600" />
+            </div>
+            <h3 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">Elevar Privilegios</h3>
+            <p className="text-gray-500 font-medium leading-relaxed mb-10">
+              ¿Estás seguro de promover a <strong className="text-gray-900">{selectedUser.full_name}</strong> como administrador?
+              Tendrá acceso a toda la gestión privada del sistema.
             </p>
-            <div className="flex space-x-3">
+            <div className="flex flex-col gap-3">
               <button
                 onClick={promoteToAdmin}
                 disabled={processing}
-                className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
+                className="w-full bg-green-600 text-white font-black uppercase tracking-widest text-xs py-5 rounded-2xl hover:bg-green-700 disabled:opacity-50 transition-all shadow-xl shadow-green-100"
               >
-                {processing ? 'Promoviendo...' : 'Promover a Admin'}
+                {processing ? 'Procesando...' : 'Confirmar Ascenso'}
               </button>
               <button
                 onClick={() => {
@@ -458,7 +458,7 @@ export default function AdminAdministradores() {
                   setSelectedUser(null);
                 }}
                 disabled={processing}
-                className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 disabled:opacity-50"
+                className="w-full bg-gray-50 text-gray-500 font-black uppercase tracking-widest text-xs py-5 rounded-2xl hover:bg-gray-100 disabled:opacity-50 transition-all"
               >
                 Cancelar
               </button>
@@ -469,20 +469,22 @@ export default function AdminAdministradores() {
 
       {/* Modal: Remover Administrador */}
       {showDemoteModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Remover Administrador</h3>
-            <p className="text-gray-600 mb-6">
-              ¿Está seguro de que desea remover los permisos de administrador de <strong>{selectedUser.full_name}</strong>?
-              Este usuario pasará a ser un usuario regular.
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl p-10 max-w-md w-full animate-in fade-in zoom-in duration-300 text-center">
+            <div className="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Trash2 className="h-10 w-10 text-orange-600" />
+            </div>
+            <h3 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">Revocar Privilegios</h3>
+            <p className="text-gray-500 font-medium leading-relaxed mb-10">
+              ¿Estás seguro de que deseas quitar los permisos de administrador a <strong className="text-gray-900">{selectedUser.full_name}</strong>?
             </p>
-            <div className="flex space-x-3">
+            <div className="flex flex-col gap-3">
               <button
                 onClick={demoteAdmin}
                 disabled={processing}
-                className="flex-1 bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 disabled:opacity-50"
+                className="w-full bg-orange-600 text-white font-black uppercase tracking-widest text-xs py-5 rounded-2xl hover:bg-orange-700 disabled:opacity-50 transition-all shadow-xl shadow-orange-100"
               >
-                {processing ? 'Removiendo...' : 'Remover Admin'}
+                {processing ? 'Procesando...' : 'Confirmar Revocación'}
               </button>
               <button
                 onClick={() => {
@@ -490,7 +492,7 @@ export default function AdminAdministradores() {
                   setSelectedUser(null);
                 }}
                 disabled={processing}
-                className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 disabled:opacity-50"
+                className="w-full bg-gray-50 text-gray-500 font-black uppercase tracking-widest text-xs py-5 rounded-2xl hover:bg-gray-100 disabled:opacity-50 transition-all"
               >
                 Cancelar
               </button>
@@ -498,6 +500,7 @@ export default function AdminAdministradores() {
           </div>
         </div>
       )}
+      <Footer />
     </div>
   );
 }

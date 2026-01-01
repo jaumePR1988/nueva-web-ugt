@@ -1,0 +1,7 @@
+﻿
+> ugt-towa-portal-pwa-avanzada@2.1.0 build
+> tsc -b && vite build
+
+src/components/admin/citas/CitasSettings.tsx(151,77): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/components/admin/citas/CitasSettings.tsx(156,110): error TS2367: This comparison appears to be unintentional because the types 'string' and 'number' have no overlap.
+src/pages/admin/AdminDashboard.tsx(114,18): error TS2552: Cannot find name 'Clock'. Did you mean 'Lock'?

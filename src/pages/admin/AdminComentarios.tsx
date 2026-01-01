@@ -77,120 +77,113 @@ export default function AdminComentarios() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f8fafc]">
       <Navbar />
+
       <div className="container mx-auto px-4 py-12">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center mb-8">
-            <MessageSquare className="h-8 w-8 text-red-600 mr-3" />
-            <h1 className="text-4xl font-bold text-gray-900">Gestión de Comentarios</h1>
-          </div>
-
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-            <div className="flex items-start">
-              <AlertCircle className="h-5 w-5 text-yellow-600 mr-2 mt-0.5" />
-              <div className="text-sm text-yellow-800">
-                <p className="font-semibold mb-1">Atención:</p>
-                <p>Al eliminar un comentario, también se eliminarán todas las reacciones asociadas. Esta acción no se puede deshacer.</p>
-              </div>
+        {/* Encabezado */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+          <div className="flex items-center">
+            <div className="p-4 bg-red-600 rounded-2xl shadow-xl shadow-red-200 mr-5">
+              <MessageSquare className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs mb-1">Moderación de Noticias</p>
+              <h1 className="text-4xl font-black text-gray-900 tracking-tight">Gestión de Comentarios</h1>
             </div>
           </div>
-
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
-              <p className="text-gray-600 mt-4">Cargando comentarios...</p>
+          <div className="bg-white px-6 py-3 rounded-2xl shadow-sm border border-gray-100">
+            <div className="text-right">
+              <p className="text-[10px] text-gray-400 font-bold uppercase leading-none">Total Comentarios</p>
+              <p className="text-xl font-black text-red-600">{comments.length}</p>
             </div>
-          ) : comments.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-md p-12 text-center">
-              <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">No hay comentarios en el sistema</p>
-            </div>
-          ) : (
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Comunicado
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Autor
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Comentario
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Fecha
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Acciones
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {comments.map((comment) => (
-                      <tr key={comment.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900 max-w-xs truncate">
-                            {comment.communique?.title || 'Sin título'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">
-                            {comment.author?.full_name || 'Usuario desconocido'}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {comment.author?.email || ''}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-700 max-w-md line-clamp-2">
-                            {comment.content}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">
-                            {format(new Date(comment.created_at), "d MMM yyyy", { locale: es })}
-                          </div>
-                          <div className="text-xs text-gray-400">
-                            {format(new Date(comment.created_at), "HH:mm", { locale: es })}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button
-                            onClick={() => handleDelete(comment.id, comment.author?.full_name || 'Usuario')}
-                            disabled={deletingId === comment.id}
-                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                          >
-                            {deletingId === comment.id ? (
-                              <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                Eliminando...
-                              </>
-                            ) : (
-                              <>
-                                <Trash2 className="h-4 w-4 mr-1" />
-                                Eliminar
-                              </>
-                            )}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-                <p className="text-sm text-gray-600">
-                  Total de comentarios: <span className="font-semibold">{comments.length}</span>
-                </p>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
+
+        <div className="bg-orange-50 border border-orange-100 rounded-3xl p-6 mb-8 flex items-start">
+          <AlertCircle className="h-5 w-5 text-orange-600 mr-4 mt-1" />
+          <div className="text-sm text-orange-800">
+            <p className="font-bold mb-1 uppercase tracking-wider text-[10px]">Aviso de Moderación</p>
+            <p className="font-medium opacity-80 leading-relaxed">Al eliminar un comentario, también se borrarán todas sus reacciones asociadas. Esta acción se aplica de forma permanente e irreversible.</p>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-20 bg-white rounded-[2rem] border border-gray-100 shadow-sm">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-600 border-t-transparent mx-auto mb-4"></div>
+            <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">Cargando comentarios...</p>
+          </div>
+        ) : comments.length === 0 ? (
+          <div className="text-center py-20 bg-white rounded-[2rem] border border-gray-100 shadow-sm px-8">
+            <MessageSquare className="h-16 w-16 text-gray-100 mx-auto mb-4" />
+            <p className="text-gray-500 font-medium text-lg">No hay comentarios en el sistema</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-50/50 border-b border-gray-100">
+                    <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                      Comunicado / Autor
+                    </th>
+                    <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                      Contenido del Comentario
+                    </th>
+                    <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                      Fecha / Hora
+                    </th>
+                    <th className="px-8 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {comments.map((comment) => (
+                    <tr key={comment.id} className="hover:bg-gray-50/50 transition-colors group">
+                      <td className="px-8 py-6">
+                        <div className="flex flex-col mb-1">
+                          <span className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-1 truncate max-w-[200px]">
+                            {comment.communique?.title || 'Sin título'}
+                          </span>
+                          <span className="text-gray-900 font-bold">{comment.author?.full_name || 'Desconocido'}</span>
+                        </div>
+                        <span className="text-gray-400 text-[10px] font-bold">{comment.author?.email || ''}</span>
+                      </td>
+                      <td className="px-8 py-6">
+                        <p className="text-sm text-gray-600 font-medium leading-relaxed max-w-lg">
+                          {comment.content}
+                        </p>
+                      </td>
+                      <td className="px-8 py-6 whitespace-nowrap">
+                        <div className="text-sm font-bold text-gray-900">
+                          {format(new Date(comment.created_at), "dd/MM/yyyy", { locale: es })}
+                        </div>
+                        <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1 italic">
+                          {format(new Date(comment.created_at), "HH:mm 'hs'", { locale: es })}
+                        </div>
+                      </td>
+                      <td className="px-8 py-6 text-right">
+                        <button
+                          onClick={() => handleDelete(comment.id, comment.author?.full_name || 'Usuario')}
+                          disabled={deletingId === comment.id}
+                          className="p-3 text-gray-400 hover:text-white hover:bg-red-600 rounded-xl transition-all shadow-sm group"
+                          title="Eliminar comentario"
+                        >
+                          {deletingId === comment.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mx-auto"></div>
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
       <Footer />
     </div>

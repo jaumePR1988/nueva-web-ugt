@@ -4,7 +4,7 @@ import Footer from '@/components/Footer';
 import SimpleTextEditor from '@/components/SimpleTextEditor';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Communique, Category, AttachmentFile } from '@/lib/supabase';
-import { Plus, Edit2, Trash2, Upload, X, FileText, Loader2, Paperclip } from 'lucide-react';
+import { Plus, Edit2, Trash2, Upload, X, FileText, Loader2, Paperclip, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Función auxiliar para extraer texto plano de HTML
@@ -20,10 +20,10 @@ export default function AdminComunicados() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ 
-    title: '', 
-    content: '', 
-    category_id: '', 
+  const [formData, setFormData] = useState({
+    title: '',
+    content: '',
+    category_id: '',
     image_url: '',
     attachments: [] as AttachmentFile[]
   });
@@ -51,7 +51,7 @@ export default function AdminComunicados() {
 
   async function handleImageUpload() {
     if (!selectedFile) return;
-    
+
     setUploading(true);
     try {
       // Validar tipo y tamaño
@@ -188,7 +188,7 @@ export default function AdminComunicados() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
+
     const submitData = {
       title: formData.title,
       content: formData.content,
@@ -203,29 +203,29 @@ export default function AdminComunicados() {
         if (error) {
           console.error('Error al actualizar comunicado:', error);
           toast.error(`Error al actualizar: ${error.message || 'Error desconocido'}`);
-        } else { 
+        } else {
           toast.success('Comunicado actualizado correctamente');
-          resetForm(); 
-          loadCommuniques(); 
+          resetForm();
+          loadCommuniques();
         }
       } else {
         console.log('Intentando insertar comunicado:', { ...submitData, author_id: user?.id, is_published: true });
-        
-        const { data, error } = await supabase.from('communiques').insert([{ 
-          ...submitData, 
-          author_id: user?.id, 
-          is_published: true 
+
+        const { data, error } = await supabase.from('communiques').insert([{
+          ...submitData,
+          author_id: user?.id,
+          is_published: true
         }]).select();
-        
+
         if (error) {
           console.error('Error al publicar comunicado:', error);
           toast.error(`Error al publicar: ${error.message || 'Error desconocido'}`);
           toast.error(`Detalles: ${JSON.stringify(error)}`);
-        } else { 
+        } else {
           console.log('Comunicado creado exitosamente:', data);
           toast.success('Comunicado publicado correctamente');
-          resetForm(); 
-          loadCommuniques(); 
+          resetForm();
+          loadCommuniques();
         }
       }
     } catch (error: any) {
@@ -243,10 +243,10 @@ export default function AdminComunicados() {
   }
 
   function handleEdit(com: Communique) {
-    setFormData({ 
-      title: com.title, 
-      content: com.content, 
-      category_id: com.category_id || '', 
+    setFormData({
+      title: com.title,
+      content: com.content,
+      category_id: com.category_id || '',
       image_url: com.image_url || '',
       attachments: com.attachments || []
     });
@@ -255,10 +255,10 @@ export default function AdminComunicados() {
   }
 
   function resetForm() {
-    setFormData({ 
-      title: '', 
-      content: '', 
-      category_id: '', 
+    setFormData({
+      title: '',
+      content: '',
+      category_id: '',
       image_url: '',
       attachments: []
     });
@@ -280,17 +280,17 @@ export default function AdminComunicados() {
         {showForm && (
           <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow mb-8">
             <h2 className="text-xl font-bold mb-4">{editingId ? 'Editar Comunicado' : 'Nuevo Comunicado'}</h2>
-            <input 
-              type="text" 
-              placeholder="Título" 
-              value={formData.title} 
-              onChange={e => setFormData({...formData, title: e.target.value})} 
-              className="w-full p-3 border rounded mb-4" 
-              required 
+            <input
+              type="text"
+              placeholder="Título"
+              value={formData.title}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
+              className="w-full p-3 border rounded mb-4"
+              required
             />
-            <select 
-              value={formData.category_id} 
-              onChange={e => setFormData({...formData, category_id: e.target.value})} 
+            <select
+              value={formData.category_id}
+              onChange={e => setFormData({ ...formData, category_id: e.target.value })}
               className="w-full p-3 border rounded mb-4"
               required
             >
@@ -301,19 +301,19 @@ export default function AdminComunicados() {
                 </option>
               ))}
             </select>
-            
+
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Contenido
               </label>
-              <SimpleTextEditor 
+              <SimpleTextEditor
                 value={formData.content}
-                onChange={(content) => setFormData({...formData, content})}
+                onChange={(content) => setFormData({ ...formData, content })}
                 placeholder="Escribe el contenido del comunicado..."
                 minHeight={450}
               />
             </div>
-            
+
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Imagen destacada (opcional)</label>
               {formData.image_url ? (
@@ -430,14 +430,14 @@ export default function AdminComunicados() {
                   <div className="flex-1">
                     <h3 className="text-xl font-bold mb-2">{com.title}</h3>
                     {category && (
-                      <span 
+                      <span
                         className="inline-block px-3 py-1 text-white rounded-full text-xs mb-2 font-semibold"
                         style={{ backgroundColor: category.color }}
                       >
                         {category.name}
                       </span>
                     )}
-                    <p className="text-gray-600">{stripHtml(com.content).substring(0,200)}...</p>
+                    <p className="text-gray-600">{stripHtml(com.content).substring(0, 200)}...</p>
                     {com.attachments && com.attachments.length > 0 && (
                       <p className="text-sm text-blue-600 mt-2 flex items-center">
                         <Paperclip className="h-4 w-4 mr-1" />
@@ -447,6 +447,17 @@ export default function AdminComunicados() {
                     <p className="text-sm text-gray-500 mt-2">{new Date(com.created_at).toLocaleString('es-ES')}</p>
                   </div>
                   <div className="flex gap-2 ml-4">
+                    <button
+                      onClick={() => {
+                        const url = `${window.location.origin}/comunicados/${com.id}`;
+                        const text = `📢 *${com.title}*\n\n${stripHtml(com.content).substring(0, 100)}...\n\nLeer más aquí: ${url}`;
+                        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                      }}
+                      className="p-2 text-green-600 hover:bg-green-50 rounded"
+                      title="Compartir por WhatsApp"
+                    >
+                      <Share2 className="h-5 w-5" />
+                    </button>
                     <button onClick={() => handleEdit(com)} className="p-2 text-blue-600 hover:bg-blue-50 rounded">
                       <Edit2 className="h-5 w-5" />
                     </button>

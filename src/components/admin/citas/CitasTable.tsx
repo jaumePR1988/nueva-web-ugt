@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, User, FileText, Download } from 'lucide-react';
+import { Trash2, User, FileText, Download, MessageCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -67,14 +67,29 @@ export const CitasTable: React.FC<CitasTableProps> = ({
                                 </select>
                             </div>
                         </div>
-                        <button
-                            onClick={() => confirmDeleteAppointment(apt.id)}
-                            className="ml-4 flex items-center space-x-1 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex-shrink-0"
-                            aria-label="Eliminar cita"
-                        >
-                            <Trash2 className="h-4 w-4" />
-                            <span className="text-sm font-medium">Eliminar</span>
-                        </button>
+                        <div className="flex items-center gap-2 ml-4">
+                            {apt.user && apt.user.full_name && (
+                                <button
+                                    onClick={() => {
+                                        const dateStr = new Date(apt.start_time).toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' });
+                                        const text = `Hola ${apt.user?.full_name}, le contacto de la Sección Sindical de UGT acerca de su cita programada para el ${dateStr}.`;
+                                        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                                    }}
+                                    className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                                    title="Contactar por WhatsApp"
+                                >
+                                    <MessageCircle className="h-4 w-4" />
+                                </button>
+                            )}
+                            <button
+                                onClick={() => confirmDeleteAppointment(apt.id)}
+                                className="flex items-center space-x-1 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex-shrink-0"
+                                aria-label="Eliminar cita"
+                            >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="text-sm font-medium">Eliminar</span>
+                            </button>
+                        </div>
                     </div>
 
                     {apt.user && (

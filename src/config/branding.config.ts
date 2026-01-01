@@ -6,9 +6,19 @@
 export const BRANDING = {
     companyName: "UGT Towa",
     shortName: "UGT",
-    logoUrl: "/logo-ugt.png", // Path to the logo in the public folder
-    primaryColor: "#dc2626",   // Tailwind red-600
-    secondaryColor: "#1f2937", // Tailwind gray-800
+    logoUrl: "/UGT-logo.jpg", // Path to the logo in the public folder
+    primaryColor: "#dc2626",   // UGT Red
+    secondaryColor: "#991b1b", // Corporate Dark Red
+    accentColor: "#fef2f2",    // Light red background accent
+
+    // Design Tokens (Solid Brand Identity)
+    tokens: {
+        borderRadius: "0.75rem",  // Professional institutional feel
+        glassOpacity: "0.98",     // Nearly solid
+        glassBlur: "4px",         // Minimal blur
+        transitionSpeed: "0.2s",  // Snappy
+        fontFamily: "'Inter', sans-serif"
+    },
 
     // SEO & Social
     metaTitle: "Portal del Afiliado - UGT Towa",

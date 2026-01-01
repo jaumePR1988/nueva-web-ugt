@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import Navbar from '../../components/Navbar';
+import Footer from '../../components/Footer';
 import { Upload, Trash2, Eye, EyeOff, Image as ImageIcon, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -71,7 +72,7 @@ export default function AdminGaleria() {
     }
 
     setSelectedFile(file);
-    
+
     // Vista previa
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -132,7 +133,7 @@ export default function AdminGaleria() {
       }
 
       toast.success('Imagen subida exitosamente');
-      
+
       // Resetear formulario
       setTitle('');
       setDescription('');
@@ -140,7 +141,7 @@ export default function AdminGaleria() {
       setDisplayOrder('0');
       setSelectedFile(null);
       setPreviewUrl(null);
-      
+
       // Recargar imágenes
       loadImages();
     } catch (error: any) {
@@ -170,133 +171,154 @@ export default function AdminGaleria() {
     }
   }
 
-  async function deleteImage(id: string) {
-    if (!confirm('¿Estás seguro de eliminar esta imagen permanentemente?')) {
+  async function deleteImage(image: EventImage) {
+    if (!confirm(`¿Estás seguro de eliminar la imagen "${image.title}" permanentemente?\n\nEsta acción no se puede deshacer.`)) {
       return;
     }
 
+    // Guardar copia del estado anterior por si falla la eliminación
+    const previousImages = [...images];
+
+    // Feedback inmediato: eliminar del estado local
+    setImages(images.filter(img => img.id !== image.id));
+
     try {
-      const { error } = await supabase
+      // 1. Eliminar de la base de datos
+      const { error: dbError } = await supabase
         .from('event_images')
         .delete()
-        .eq('id', id);
+        .eq('id', image.id);
 
-      if (error) throw error;
+      if (dbError) throw dbError;
 
-      toast.success('Imagen eliminada');
-      loadImages();
-    } catch (error) {
+      // 2. Extraer el nombre del archivo de la URL e intentar eliminar de Storage
+      try {
+        const urlParts = image.image_url.split('/');
+        const fileName = urlParts[urlParts.length - 1];
+
+        if (fileName) {
+          await supabase.storage
+            .from('event-images')
+            .remove([fileName]);
+        }
+      } catch (storageError) {
+        console.error('Error deleting file from storage:', storageError);
+        // No lanzamos error aquí porque el registro de la DB ya se borró
+      }
+
+      toast.success('Imagen eliminada correctamente');
+    } catch (error: any) {
       console.error('Delete error:', error);
-      toast.error('Error al eliminar imagen');
+      // Revertir estado local en caso de error
+      setImages(previousImages);
+      toast.error(`Error al eliminar: ${error.message || 'Error desconocido'}`);
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+    <div className="min-h-screen bg-[#f8fafc]">
       <Navbar />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Gestión de Galería de Eventos
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Administra las imágenes que se muestran en el carrusel de la página principal
-          </p>
+
+      <div className="container mx-auto px-4 py-12">
+        {/* Encabezado */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+          <div className="flex items-center">
+            <div className="p-4 bg-red-600 rounded-2xl shadow-xl shadow-red-200 mr-5">
+              <ImageIcon className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs mb-1">Gestión Visual</p>
+              <h1 className="text-4xl font-black text-gray-900 tracking-tight">Galería de Eventos</h1>
+            </div>
+          </div>
         </div>
 
         {/* Formulario de subida */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-            <Upload className="h-5 w-5 mr-2" />
+        <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 mb-12">
+          <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+            <Upload className="h-5 w-5 mr-3 text-red-600" />
             Subir Nueva Imagen
           </h2>
 
           <form onSubmit={handleUpload} className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Título *
+                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
+                  Título del Evento *
                 </label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500"
-                  placeholder="Nombre del evento"
+                  className="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-red-600 font-medium text-gray-900"
+                  placeholder="Ej: Asamblea General 2024"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Fecha del evento
+                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
+                  Fecha del Evento
                 </label>
                 <input
                   type="date"
                   value={eventDate}
                   onChange={(e) => setEventDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500"
+                  className="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-red-600 font-medium text-gray-900"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Descripción
+              <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
+                Breve Descripción
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500"
-                placeholder="Descripción del evento (opcional)"
+                className="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-red-600 font-medium text-gray-900"
+                placeholder="Describe brevemente lo ocurrido en el evento..."
               />
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Orden de visualización
+                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
+                  Posición (Orden)
                 </label>
                 <input
                   type="number"
                   value={displayOrder}
                   onChange={(e) => setDisplayOrder(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500"
+                  className="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-red-600 font-medium text-gray-900"
                   placeholder="0"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Menor número aparece primero
-                </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Imagen *
+                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
+                  Seleccionar Archivo *
                 </label>
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/jpg,image/webp"
                   onChange={handleFileChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500"
+                  className="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-red-600 font-medium text-gray-900 file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-widest file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
                   required
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  PNG, JPG, WEBP (máx. 5MB)
-                </p>
               </div>
             </div>
 
             {previewUrl && (
-              <div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Vista previa:
+              <div className="p-4 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4">
+                  Vista Previa
                 </p>
                 <img
                   src={previewUrl}
                   alt="Preview"
-                  className="max-h-64 rounded-lg shadow-md"
+                  className="max-h-64 rounded-2xl shadow-lg border-4 border-white"
                 />
               </div>
             )}
@@ -304,14 +326,14 @@ export default function AdminGaleria() {
             <button
               type="submit"
               disabled={uploading}
-              className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-md transition-colors flex items-center justify-center"
+              className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-200 text-white font-black uppercase tracking-widest text-xs py-5 px-8 rounded-2xl transition-all shadow-xl shadow-red-200 flex items-center justify-center group"
             >
               {uploading ? (
-                <>Subiendo...</>
+                <>Subiendo imagen...</>
               ) : (
                 <>
-                  <Upload className="h-5 w-5 mr-2" />
-                  Subir Imagen
+                  <Upload className="h-4 w-4 mr-3 group-hover:-translate-y-1 transition-transform" />
+                  Publicar en Galería
                 </>
               )}
             </button>
@@ -319,83 +341,91 @@ export default function AdminGaleria() {
         </div>
 
         {/* Lista de imágenes */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-            <ImageIcon className="h-5 w-5 mr-2" />
-            Imágenes Subidas ({images.length})
+        <div className="mb-12">
+          <h2 className="text-xl font-bold text-gray-900 mb-8 flex items-center px-4">
+            <ImageIcon className="h-5 w-5 mr-3 text-red-600" />
+            Archivo de Imágenes ({images.length})
           </h2>
 
           {loading ? (
-            <p className="text-gray-600 dark:text-gray-400 text-center py-8">Cargando...</p>
+            <div className="text-center py-20 bg-white rounded-[2rem] border border-gray-100 shadow-sm">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-600 border-t-transparent mx-auto mb-4"></div>
+              <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">Cargando galería...</p>
+            </div>
           ) : images.length === 0 ? (
-            <p className="text-gray-600 dark:text-gray-400 text-center py-8">
-              No hay imágenes subidas aún
-            </p>
+            <div className="text-center py-20 bg-white rounded-[2rem] border border-gray-100 shadow-sm px-8">
+              <ImageIcon className="h-16 w-16 text-gray-100 mx-auto mb-4" />
+              <p className="text-gray-500 font-medium">No hay imágenes subidas aún</p>
+            </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {images.map((image) => (
                 <div
                   key={image.id}
-                  className={`border rounded-lg overflow-hidden ${
-                    image.is_active
-                      ? 'border-green-500 dark:border-green-400'
-                      : 'border-gray-300 dark:border-gray-600 opacity-60'
-                  }`}
+                  className={`bg-white rounded-[2rem] overflow-hidden border transition-all duration-300 ${image.is_active
+                    ? 'border-gray-100 shadow-xl shadow-gray-200/50'
+                    : 'border-gray-200 opacity-60 grayscale'
+                    }`}
                 >
-                  <div className="relative h-48">
+                  <div className="relative h-56">
                     <img
                       src={image.image_url}
                       alt={image.title}
                       className="w-full h-full object-cover"
                     />
                     {!image.is_active && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <span className="text-white font-medium">Oculta</span>
+                      <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] flex items-center justify-center">
+                        <span className="px-4 py-2 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg">Oculta del público</span>
                       </div>
                     )}
                   </div>
-                  
-                  <div className="p-4 bg-white dark:bg-gray-700">
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
-                      {image.title}
-                    </h3>
+
+                  <div className="p-8">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="font-black text-gray-900 text-lg mb-1 leading-tight">
+                          {image.title}
+                        </h3>
+                        {image.event_date && (
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center">
+                            <Calendar className="h-3 w-3 mr-2 text-red-600" />
+                            {new Date(image.event_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
                     {image.description && (
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-2 line-clamp-2">
+                      <p className="text-sm text-gray-500 mb-6 line-clamp-2 font-medium leading-relaxed">
                         {image.description}
                       </p>
                     )}
-                    {image.event_date && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 flex items-center">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        {new Date(image.event_date).toLocaleDateString('es-ES')}
-                      </p>
-                    )}
-                    
-                    <div className="flex gap-2">
+
+                    <div className="flex gap-3">
                       <button
                         onClick={() => toggleActive(image.id, image.is_active)}
-                        className={`flex-1 px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center ${
-                          image.is_active
-                            ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 hover:bg-yellow-200'
-                            : 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 hover:bg-green-200'
-                        }`}
+                        className={`flex-1 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center shadow-sm ${image.is_active
+                          ? 'bg-orange-50 text-orange-700 hover:bg-orange-600 hover:text-white'
+                          : 'bg-green-50 text-green-700 hover:bg-green-600 hover:text-white'
+                          }`}
                       >
                         {image.is_active ? (
                           <>
-                            <EyeOff className="h-4 w-4 mr-1" />
+                            <EyeOff className="h-4 w-4 mr-2" />
                             Ocultar
                           </>
                         ) : (
                           <>
-                            <Eye className="h-4 w-4 mr-1" />
+                            <Eye className="h-4 w-4 mr-2" />
                             Activar
                           </>
                         )}
                       </button>
-                      
+
                       <button
-                        onClick={() => deleteImage(image.id)}
-                        className="px-3 py-2 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 hover:bg-red-200 rounded text-sm font-medium transition-colors"
+                        onClick={() => deleteImage(image)}
+                        className="px-4 py-3 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl transition-all shadow-sm"
+                        title="Eliminar permanentemente"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -407,6 +437,7 @@ export default function AdminGaleria() {
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

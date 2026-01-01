@@ -9,8 +9,8 @@ export default function Footer() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <h3 className="text-lg font-bold mb-4 text-red-500">Contacto</h3>
-            <div className="space-y-2 text-gray-300">
+            <h3 className="text-base font-bold mb-4 text-red-500 uppercase tracking-wider">Contacto</h3>
+            <div className="space-y-2 text-sm text-gray-300">
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4" />
                 <span>{CONTACT_CONFIG.email}</span>
@@ -27,8 +27,8 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-lg font-bold mb-4 text-red-500">Enlaces</h3>
-            <div className="space-y-2">
+            <h3 className="text-base font-bold mb-4 text-red-500 uppercase tracking-wider">Enlaces</h3>
+            <div className="space-y-2 text-sm">
               <Link to="/quienes-somos" className="block text-gray-300 hover:text-white transition">
                 Quiénes Somos
               </Link>
@@ -45,10 +45,10 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-lg font-bold mb-4 text-red-500">Sobre UGT</h3>
+            <h3 className="text-base font-bold mb-4 text-red-500 uppercase tracking-wider">Sobre UGT</h3>
             <p className="text-gray-300 text-sm leading-relaxed">
-              Sección Sindical de UGT en Towa Pharmaceutical Europe. 
-              Comprometidos con la defensa de los derechos laborales y 
+              Sección Sindical de UGT en Towa Pharmaceutical Europe.
+              Comprometidos con la defensa de los derechos laborales y
               el bienestar de todos los trabajadores.
             </p>
           </div>

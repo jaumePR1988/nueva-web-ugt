@@ -86,7 +86,7 @@ export default function AdminSugerencias() {
             </div>
             <div>
               <p className="text-gray-500 font-bold uppercase tracking-widest text-xs mb-1">Feedback de Usuarios</p>
-              <h1 className="text-4xl font-black text-gray-900 tracking-tight">Buzón de Sugerencias</h1>
+              <h1 className="text-2xl font-black text-gray-900 tracking-tight">Buzón de Sugerencias</h1>
             </div>
           </div>
           {suggestions.length > 0 && (
@@ -128,7 +128,7 @@ export default function AdminSugerencias() {
                         {format(new Date(suggestion.created_at), "d 'de' MMMM, yyyy 'a las' HH:mm", { locale: es })}
                       </span>
                     </div>
-                    <p className="text-gray-900 text-lg leading-relaxed font-medium">
+                    <p className="text-gray-900 text-base leading-relaxed font-medium">
                       {suggestion.content}
                     </p>
                   </div>

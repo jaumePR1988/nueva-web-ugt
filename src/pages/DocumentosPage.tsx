@@ -6,6 +6,8 @@ import { FileText, Download, Calendar, User, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { usePWA_Inteligente as usePWA } from '@/hooks/usePWA_Inteligente';
+import { useNavigate } from 'react-router-dom';
 
 const CATEGORIES = ['Todos', 'Nóminas', 'Contratos', 'Políticas', 'Procedimientos', 'Otros'];
 
@@ -14,6 +16,8 @@ export default function DocumentosPage() {
   const [filteredDocs, setFilteredDocs] = useState<Document[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [loading, setLoading] = useState(true);
+  const { state: pwaState } = usePWA();
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadDocuments();
@@ -85,11 +89,10 @@ export default function DocumentosPage() {
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className={`px-4 py-2 rounded-lg transition ${
-                    selectedCategory === category
+                  className={`px-4 py-2 rounded-lg transition ${selectedCategory === category
                       ? 'bg-red-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                    }`}
                 >
                   {category}
                 </button>
@@ -121,17 +124,17 @@ export default function DocumentosPage() {
                       {doc.category}
                     </span>
                   </div>
-                  
+
                   <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
                     {doc.title}
                   </h3>
-                  
+
                   {doc.description && (
                     <p className="text-sm text-gray-600 mb-4 line-clamp-3">
                       {doc.description}
                     </p>
                   )}
-                  
+
                   <div className="border-t pt-4 space-y-2">
                     <div className="flex items-center text-xs text-gray-500">
                       <Calendar className="h-3 w-3 mr-1" />
@@ -147,16 +150,27 @@ export default function DocumentosPage() {
                       Tamaño: {formatFileSize(doc.file_size)}
                     </div>
                   </div>
-                  
-                  <a
-                    href={doc.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+
+                  <button
+                    onClick={() => {
+                      if (!pwaState.isInstalled) {
+                        toast.error("Función exclusiva de la App", {
+                          description: "Instala la App de UGT Towa para descargar documentos y consultarlos sin conexión.",
+                          action: {
+                            label: "Instalar",
+                            onClick: () => navigate('/instalar')
+                          },
+                          duration: 10000
+                        });
+                      } else {
+                        window.open(doc.file_url, '_blank');
+                      }
+                    }}
                     className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
                   >
                     <Download className="h-4 w-4" />
                     Descargar
-                  </a>
+                  </button>
                 </div>
               ))}
             </div>

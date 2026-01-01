@@ -7,6 +7,11 @@ import { format, parseISO, subDays, eachDayOfInterval, getHours, isWithinInterva
 import { es } from 'date-fns/locale';
 import { exportToExcel, exportToPDF, exportToCSV } from '@/lib/utils';
 
+
+export const TIME_SLOTS = [
+  '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'
+];
+
 // New Modular Components
 import { CitasStatsCards } from '@/components/admin/citas/CitasStatsCards';
 import { CitasTabsNavigation } from '@/components/admin/citas/CitasTabsNavigation';
@@ -24,7 +29,7 @@ import {
   User, Trash2, CheckCircle, XCircle, Save, Plus, Minus, Edit3, X,
   Users, Target, Activity, Mail, CalendarDays, Clock3, TrendingDown
 } from 'lucide-react';
-import { DateRange } from 'react-day-picker';
+import { DateRange, DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 
 interface Notification {
@@ -193,7 +198,10 @@ export default function AdminCitas() {
   const [stats, setStats] = useState<AppointmentStats>({ today: 0, upcoming: 0, pending: 0, completed: 0 });
   const [filterType, setFilterType] = useState<string>('all');
   const [filterRead, setFilterRead] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<'appointments' | 'notifications' | 'stats' | 'config'>('appointments');
+  const [activeTab, setActiveTab] = useState<'appointments' | 'notifications' | 'stats' | 'config' | 'availability'>('appointments');
+  const [blockedSlots, setBlockedSlots] = useState<any[]>([]);
+  const [availabilityDate, setAvailabilityDate] = useState<Date>(new Date());
+  const [availabilityType, setAvailabilityType] = useState<'sindical' | 'prevencion'>('sindical');
 
   // Estados para filtros avanzados
   const [users, setUsers] = useState<UserOption[]>([]);
@@ -261,6 +269,61 @@ export default function AdminCitas() {
       notificationsSubscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'availability') {
+      loadBlockedSlots();
+    }
+  }, [activeTab, availabilityDate, availabilityType]);
+
+  async function loadBlockedSlots() {
+    const dateStr = format(availabilityDate, 'yyyy-MM-dd');
+    const { data } = await supabase
+      .from('appointment_slots')
+      .select('*')
+      .eq('appointment_date', dateStr)
+      .eq('delegate_type', availabilityType)
+      .eq('status', 'blocked');
+    if (data) setBlockedSlots(data);
+    else setBlockedSlots([]);
+  }
+
+  async function toggleBlockSlot(time: string) {
+    const dateStr = format(availabilityDate, 'yyyy-MM-dd');
+    const existing = blockedSlots.find(s => s.start_time.includes(time));
+
+    if (existing) {
+      const { error } = await supabase
+        .from('appointment_slots')
+        .delete()
+        .eq('id', existing.id);
+
+      if (!error) {
+        toast.success(`Hueco ${time} desbloqueado`);
+        loadBlockedSlots();
+      }
+    } else {
+      const startIso = `${dateStr}T${time}:00`;
+      const endHour = parseInt(time.split(':')[0]) + 1;
+      const endIso = `${dateStr}T${endHour.toString().padStart(2, '0')}:${time.split(':')[1]}:00`;
+
+      const { error } = await supabase
+        .from('appointment_slots')
+        .insert([{
+          appointment_date: dateStr,
+          delegate_type: availabilityType,
+          start_time: startIso,
+          end_time: endIso,
+          status: 'blocked',
+          block_reason: 'Bloqueo manual por administrador'
+        }]);
+
+      if (!error) {
+        toast.success(`Hueco ${time} bloqueado`);
+        loadBlockedSlots();
+      }
+    }
+  }
 
   async function loadAppointments() {
     const { data } = await supabase
@@ -1149,6 +1212,71 @@ export default function AdminCitas() {
                 updateAlertSetting={updateAlertSetting}
                 saveConfig={saveConfig}
               />
+            )}
+
+            {activeTab === 'availability' && (
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 text-center flex flex-col items-center">
+                    <h3 className="text-lg font-bold text-gray-900 mb-6">Seleccionar Día</h3>
+                    <DayPicker
+                      mode="single"
+                      selected={availabilityDate}
+                      onSelect={(day) => day && setAvailabilityDate(day)}
+                      locale={es}
+                      className="bg-white p-4 rounded-xl shadow-sm border border-gray-200"
+                    />
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-bold text-gray-900">Horarios del {format(availabilityDate, "d 'de' MMMM", { locale: es })}</h3>
+                      <div className="flex bg-gray-100 p-1 rounded-lg">
+                        <button
+                          onClick={() => setAvailabilityType('sindical')}
+                          className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${availabilityType === 'sindical' ? 'bg-white shadow-sm text-red-600' : 'text-gray-500'}`}
+                        >
+                          Sindical
+                        </button>
+                        <button
+                          onClick={() => setAvailabilityType('prevencion')}
+                          className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${availabilityType === 'prevencion' ? 'bg-white shadow-sm text-red-600' : 'text-gray-500'}`}
+                        >
+                          Prevención
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'].map(time => {
+                        const isBlocked = blockedSlots.some(s => s.start_time.includes(time));
+                        return (
+                          <button
+                            key={time}
+                            onClick={() => toggleBlockSlot(time)}
+                            className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${isBlocked
+                              ? 'border-red-100 bg-red-50 text-red-600'
+                              : 'border-gray-100 bg-white hover:border-red-200 text-gray-700'
+                              }`}
+                          >
+                            <span className="font-black text-lg">{time}</span>
+                            <span className="text-[10px] uppercase font-bold tracking-widest">
+                              {isBlocked ? 'Bloqueado' : 'Disponible'}
+                            </span>
+                            {isBlocked ? <XCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                      <p className="text-xs text-blue-700 font-medium leading-relaxed">
+                        <strong>Nota:</strong> Haz clic en un horario para alternar entre disponible y bloqueado. Los horarios bloqueados no aparecerán como opción para los compañeros en la página de reservas.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>

@@ -4,11 +4,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LogOut, User, LayoutDashboard, Menu, X, Bell, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { BRANDING } from '@/config/branding.config';
+import { usePWA_Inteligente as usePWA } from '@/hooks/usePWA_Inteligente';
+import { Smartphone } from 'lucide-react';
 
 export default function Navbar() {
   const { user, signOut, isAdmin, isAffiliate } = useAuth();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { state: pwaState } = usePWA();
 
   const handleSignOut = async () => {
     try {
@@ -48,7 +51,7 @@ export default function Navbar() {
               />
             </div>
             <div className="flex flex-col">
-              <h1 className="text-xl font-black text-white tracking-tight leading-none">
+              <h1 className="text-lg font-black text-white tracking-tight leading-none">
                 {BRANDING.companyName}
               </h1>
               <p className="text-[10px] uppercase font-bold tracking-widest text-white/90">
@@ -63,7 +66,7 @@ export default function Navbar() {
               <Link
                 key={link.to}
                 to={link.to}
-                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${location.pathname === link.to || (link.to !== '/' && location.pathname.startsWith(link.to))
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-300 ${location.pathname === link.to || (link.to !== '/' && location.pathname.startsWith(link.to))
                   ? 'bg-white text-red-600 shadow-md'
                   : 'text-white hover:bg-white/10'
                   }`}
@@ -71,6 +74,15 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
+            {!pwaState.isInstalled && (
+              <Link
+                to="/instalar"
+                className="flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-black bg-yellow-400 text-yellow-900 hover:bg-yellow-300 transition-all duration-300 shadow-sm animate-pulse"
+              >
+                <Smartphone className="h-4 w-4" />
+                <span>Instalar App</span>
+              </Link>
+            )}
           </div>
 
           {/* Desktop Navigation */}
@@ -142,6 +154,20 @@ export default function Navbar() {
                   <ChevronRight className="h-4 w-4 opacity-70" />
                 </Link>
               ))}
+
+              {!pwaState.isInstalled && (
+                <Link
+                  to="/instalar"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center justify-between px-4 py-3 rounded-xl bg-yellow-400 text-yellow-900 shadow-md animate-pulse"
+                >
+                  <div className="flex items-center space-x-3">
+                    <Smartphone className="h-5 w-5" />
+                    <span className="font-black uppercase tracking-widest text-xs">Instalar App Oficial</span>
+                  </div>
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              )}
 
               <div className="pt-4 mt-2 border-t border-white/20 space-y-3">
                 {user ? (

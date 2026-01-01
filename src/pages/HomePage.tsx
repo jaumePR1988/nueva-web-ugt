@@ -95,26 +95,25 @@ export default function HomePage() {
                 Sección Sindical Oficial
               </div>
 
-              <h1 className="text-5xl md:text-7xl font-black leading-[0.95] tracking-tighter">
-                TRABAJAMOS <br />
-                <span className="text-red-200">POR TI</span>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tighter">
+                TRABAJAMOS <span className="text-red-200">POR TI</span>
               </h1>
 
-              <p className="text-lg md:text-xl text-red-50 font-medium max-w-lg leading-relaxed">
+              <p className="text-base md:text-lg text-red-50 font-medium max-w-lg leading-relaxed">
                 Bienvenido al portal institucional de {BRANDING.companyName}. Gestiona tus servicios y mantente informado con el respaldo de UGT.
               </p>
 
               <div className="flex flex-wrap gap-5 pt-4">
                 <Link
                   to="/citas"
-                  className="flex items-center px-10 py-5 bg-white text-red-600 rounded-xl font-black text-xl hover:bg-gray-100 transition-all duration-300 shadow-2xl hover:scale-105"
+                  className="flex items-center px-8 py-4 bg-white text-red-600 rounded-xl font-black text-lg hover:bg-gray-100 transition-all duration-300 shadow-2xl hover:scale-105"
                 >
-                  <Calendar className="h-6 w-6 mr-3" />
+                  <Calendar className="h-5 w-5 mr-3" />
                   Solicitar Cita
                 </Link>
                 <Link
                   to="/comunicados"
-                  className="flex items-center px-10 py-5 bg-transparent border-2 border-white/30 text-white rounded-xl font-black text-xl hover:bg-white/10 hover:border-white transition-all duration-300"
+                  className="flex items-center px-8 py-4 bg-transparent border-2 border-white/30 text-white rounded-xl font-black text-lg hover:bg-white/10 hover:border-white transition-all duration-300"
                 >
                   Comunicados
                 </Link>
@@ -144,8 +143,8 @@ export default function HomePage() {
           <div className="mb-16 animate-in" style={{ animationDelay: '0.3s' }}>
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
               <div>
-                <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-2">Tu opinión cuenta</h2>
-                <p className="text-gray-500 dark:text-gray-400">Participa en las decisiones activas de nuestra sección sindical</p>
+                <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-2">Tu opinión cuenta</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Participa en las decisiones activas de nuestra sección sindical</p>
               </div>
               <Link to="/encuestas" className="inline-flex items-center text-red-600 dark:text-red-400 font-bold group">
                 Explorar todas las encuestas
@@ -329,8 +328,8 @@ export default function HomePage() {
                 <div className="w-16 h-16 rounded-2xl bg-gray-900 dark:bg-white flex items-center justify-center mb-8 shadow-xl">
                   <MessageSquare className="h-8 w-8 text-white dark:text-gray-900" />
                 </div>
-                <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-6">Buzón Ético y de Sugerencias</h2>
-                <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 leading-relaxed max-w-md">
+                <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-4">Buzón Ético y de Sugerencias</h2>
+                <p className="text-base text-gray-600 dark:text-gray-400 mb-6 leading-relaxed max-w-md">
                   Tu voz es fundamental. Envía comentarios, sugerencias o preocupaciones de forma **100% anónima**.
                 </p>
                 <div className="space-y-4">
@@ -394,7 +393,7 @@ function SuggestionsForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full sm:w-auto px-10 py-4 bg-red-600 text-white rounded-2xl font-bold text-lg hover:bg-red-700 hover:shadow-xl hover:shadow-red-200 dark:hover:shadow-red-900/20 disabled:bg-gray-400 disabled:transform-none transform active:scale-95 transition-all duration-300 flex items-center justify-center"
+        className="w-full sm:w-auto px-8 py-3 bg-red-600 text-white rounded-2xl font-bold text-base hover:bg-red-700 hover:shadow-xl hover:shadow-red-200 dark:hover:shadow-red-900/20 disabled:bg-gray-400 disabled:transform-none transform active:scale-95 transition-all duration-300 flex items-center justify-center"
       >
         {loading ? (
           <>

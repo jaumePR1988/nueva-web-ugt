@@ -7,6 +7,8 @@ import { supabase, SyndicalDocument } from '@/lib/supabase';
 import { Search, Download, FileText, Filter, User, BookOpen, Gift, Vote } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { usePWA_Inteligente as usePWA } from '@/hooks/usePWA_Inteligente';
+import { toast } from 'sonner';
 
 export default function TestBibliotecaPage() {
   const { user } = useAuth();
@@ -16,6 +18,7 @@ export default function TestBibliotecaPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('todas');
   const [loading, setLoading] = useState(true);
+  const { state: pwaState } = usePWA();
 
   const categories = [
     { value: 'todas', label: 'Todas las Categorías' },
@@ -63,7 +66,7 @@ export default function TestBibliotecaPage() {
 
     // Filtrar por búsqueda
     if (searchTerm) {
-      filtered = filtered.filter(doc => 
+      filtered = filtered.filter(doc =>
         doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (doc.description && doc.description.toLowerCase().includes(searchTerm.toLowerCase()))
       );
@@ -186,15 +189,26 @@ export default function TestBibliotecaPage() {
                           )}
                         </div>
                       </div>
-                      <a
-                        href={doc.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        onClick={() => {
+                          if (!pwaState.isInstalled) {
+                            toast.error("Función exclusiva de la App", {
+                              description: "Instala la App de UGT Towa para descargar documentos y consultarlos sin conexión.",
+                              action: {
+                                label: "Instalar",
+                                onClick: () => navigate('/instalar')
+                              },
+                              duration: 10000
+                            });
+                          } else {
+                            window.open(doc.file_url, '_blank');
+                          }
+                        }}
                         className="ml-4 flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
                       >
                         <Download className="h-4 w-4" />
                         <span>Descargar</span>
-                      </a>
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -204,7 +218,7 @@ export default function TestBibliotecaPage() {
             {/* Información */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-800">
-                <strong>Nota:</strong> Estos documentos son de uso exclusivo para afiliados UGT. 
+                <strong>Nota:</strong> Estos documentos son de uso exclusivo para afiliados UGT.
                 Por favor, no compartas estos archivos fuera de la organización.
               </p>
             </div>

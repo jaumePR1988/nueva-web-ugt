@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import Navbar from '../../components/Navbar';
-import { 
-  Mail, FileDown, Users, BarChart3, Plus, Trash2, Edit, Eye, 
+import {
+  Mail, FileDown, Users, BarChart3, Plus, Trash2, Edit, Eye,
   FileText, Calendar, TrendingUp, MessageSquare, Lightbulb,
   AlertCircle, CheckCircle, Clock, Download
 } from 'lucide-react';
@@ -55,7 +55,7 @@ export default function AdminNewsletter() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'content' | 'generated'>('dashboard');
   const [loading, setLoading] = useState(false);
-  
+
   // Dashboard stats
   const [stats, setStats] = useState({
     totalSubscribers: 0,
@@ -65,8 +65,8 @@ export default function AdminNewsletter() {
     newThisMonth: 0,
     growthRate: 0
   });
-  
-  const [monthlyGrowth, setMonthlyGrowth] = useState<{labels: string[], data: number[]}>({
+
+  const [monthlyGrowth, setMonthlyGrowth] = useState<{ labels: string[], data: number[] }>({
     labels: [],
     data: []
   });
@@ -100,7 +100,7 @@ export default function AdminNewsletter() {
 
   // Subscribers
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
-  
+
   // Estados para eliminar suscriptores
   const [deleteSubscriberId, setDeleteSubscriberId] = useState<string | null>(null);
   const [showDeleteSubscriberModal, setShowDeleteSubscriberModal] = useState<boolean>(false);
@@ -112,14 +112,14 @@ export default function AdminNewsletter() {
     loadNewsletters();
     loadSubscribers();
     loadConfig();
-    
+
     // Auto-actualización cada 30 segundos
     const interval = setInterval(() => {
       loadDashboardStats();
       loadSubscribers();
       loadConfig();
     }, 30000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -145,7 +145,7 @@ export default function AdminNewsletter() {
 
       const totalSubs = subsResult.data?.length || 0;
       const activeSubs = subsResult.data?.filter(s => s.is_active).length || 0;
-      
+
       // Calcular nuevos suscriptores este mes
       const now = new Date();
       const startThisMonth = startOfMonth(now);
@@ -153,7 +153,7 @@ export default function AdminNewsletter() {
         const subDate = parseISO(s.subscribed_at);
         return subDate >= startThisMonth;
       }).length || 0;
-      
+
       // Calcular tasa de crecimiento (comparado con mes anterior)
       const startLastMonth = startOfMonth(subMonths(now, 1));
       const endLastMonth = endOfMonth(subMonths(now, 1));
@@ -161,8 +161,8 @@ export default function AdminNewsletter() {
         const subDate = parseISO(s.subscribed_at);
         return subDate >= startLastMonth && subDate <= endLastMonth;
       }).length || 0;
-      
-      const growthRate = lastMonthSubs > 0 
+
+      const growthRate = lastMonthSubs > 0
         ? Math.round(((newThisMonth - lastMonthSubs) / lastMonthSubs) * 100)
         : 0;
 
@@ -174,33 +174,33 @@ export default function AdminNewsletter() {
         newThisMonth,
         growthRate
       });
-      
+
       // Calcular crecimiento mensual para gráfico (últimos 12 meses)
       calculateMonthlyGrowth(subsResult.data || []);
     } catch (error) {
       console.error('Error loading stats:', error);
     }
   };
-  
+
   const calculateMonthlyGrowth = (subscribers: any[]) => {
     const now = new Date();
     const labels: string[] = [];
     const data: number[] = [];
-    
+
     for (let i = 11; i >= 0; i--) {
       const monthDate = subMonths(now, i);
       const monthStart = startOfMonth(monthDate);
       const monthEnd = endOfMonth(monthDate);
-      
+
       const count = subscribers.filter(s => {
         const subDate = parseISO(s.subscribed_at);
         return subDate >= monthStart && subDate <= monthEnd;
       }).length;
-      
+
       labels.push(format(monthDate, 'MMM yyyy', { locale: es }));
       data.push(count);
     }
-    
+
     setMonthlyGrowth({ labels, data });
   };
 
@@ -245,7 +245,7 @@ export default function AdminNewsletter() {
       const { data, error } = await supabase
         .from('newsletter_subscribers')
         .select('*')
-        .order('subscribed_at', { ascending: false});
+        .order('subscribed_at', { ascending: false });
 
       if (error) throw error;
       setSubscribers(data || []);
@@ -261,7 +261,7 @@ export default function AdminNewsletter() {
 
   async function deleteSubscriber() {
     if (!deleteSubscriberId) return;
-    
+
     setDeletingSubscriber(true);
     try {
       const { error } = await supabase
@@ -319,7 +319,7 @@ export default function AdminNewsletter() {
       const newValue = !autoGenEnabled;
       const { error } = await supabase
         .from('newsletter_config')
-        .update({ 
+        .update({
           auto_generation_enabled: newValue,
           updated_at: new Date().toISOString()
         })
@@ -484,7 +484,7 @@ export default function AdminNewsletter() {
     setEditingNewsletter(newsletter);
     const htmlContent = newsletter.content?.html || '';
     setEditedContent(htmlContent);
-    
+
     // Esperar un momento para que el DOM se actualice, luego establecer el contenido
     setTimeout(() => {
       const editor = document.getElementById('newsletter-editor') as HTMLElement;
@@ -492,7 +492,7 @@ export default function AdminNewsletter() {
         editor.innerHTML = htmlContent;
       }
     }, 100);
-    
+
     setShowEditModal(true);
   };
 
@@ -508,7 +508,7 @@ export default function AdminNewsletter() {
         ...editingNewsletter.content,
         html: editedContent
       };
-      
+
       const { error } = await supabase
         .from('newsletter_editions')
         .update({ content: updatedContent })
@@ -585,7 +585,7 @@ export default function AdminNewsletter() {
     console.log('=== GENERANDO PDF PROFESIONAL ===');
     console.log('Newsletter ID:', newsletter.id);
     console.log('Newsletter Title:', newsletter.title);
-    
+
     setLoading(true);
     toast.info('Generando vista optimizada para PDF...');
 
@@ -603,13 +603,13 @@ export default function AdminNewsletter() {
       }
 
       const htmlContent = editingNewsletter?.id === newsletter.id ? editedContent : (newsletterData?.content?.html || newsletter.content?.html || '');
-      
+
       if (!htmlContent || htmlContent.trim() === '') {
         throw new Error('El contenido del newsletter está vacío');
       }
 
       console.log('Contenido HTML cargado, longitud:', htmlContent.length);
-      
+
       // Llamar a la Edge Function para obtener HTML optimizado para PDF
       const { data, error } = await supabase.functions.invoke('generate-newsletter-pdf', {
         body: { newsletterId: newsletter.id }
@@ -621,16 +621,16 @@ export default function AdminNewsletter() {
       }
 
       const optimizedHtml = data?.data?.htmlContent;
-      
+
       if (!optimizedHtml) {
         throw new Error('No se recibió HTML optimizado del servidor');
       }
 
       console.log('HTML profesional recibido del servidor');
-      
+
       // Abrir en nueva ventana para impresión
       const printWindow = window.open('', '_blank');
-      
+
       if (!printWindow) {
         throw new Error('Por favor, permite las ventanas emergentes para generar el PDF');
       }
@@ -639,9 +639,9 @@ export default function AdminNewsletter() {
       printWindow.document.close();
 
       // Esperar que se cargue el contenido
-      printWindow.onload = function() {
+      printWindow.onload = function () {
         console.log('Contenido cargado en ventana de impresión');
-        
+
         // Abrir diálogo de impresión automáticamente
         setTimeout(() => {
           printWindow.print();
@@ -756,11 +756,10 @@ export default function AdminNewsletter() {
             <nav className="flex -mb-px">
               <button
                 onClick={() => setActiveTab('dashboard')}
-                className={`px-6 py-4 text-sm font-medium border-b-2 ${
-                  activeTab === 'dashboard'
-                    ? 'border-red-600 text-red-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                className={`px-6 py-4 text-sm font-medium border-b-2 ${activeTab === 'dashboard'
+                  ? 'border-red-600 text-red-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <BarChart3 className="w-5 h-5" />
@@ -769,11 +768,10 @@ export default function AdminNewsletter() {
               </button>
               <button
                 onClick={() => setActiveTab('content')}
-                className={`px-6 py-4 text-sm font-medium border-b-2 ${
-                  activeTab === 'content'
-                    ? 'border-red-600 text-red-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                className={`px-6 py-4 text-sm font-medium border-b-2 ${activeTab === 'content'
+                  ? 'border-red-600 text-red-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <FileText className="w-5 h-5" />
@@ -782,11 +780,10 @@ export default function AdminNewsletter() {
               </button>
               <button
                 onClick={() => setActiveTab('generated')}
-                className={`px-6 py-4 text-sm font-medium border-b-2 ${
-                  activeTab === 'generated'
-                    ? 'border-red-600 text-red-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                className={`px-6 py-4 text-sm font-medium border-b-2 ${activeTab === 'generated'
+                  ? 'border-red-600 text-red-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <FileDown className="w-5 h-5" />
@@ -842,7 +839,7 @@ export default function AdminNewsletter() {
                 </div>
               </div>
             </div>
-            
+
             {/* Configuración de Generación Automática */}
             <div className="bg-white p-6 rounded-lg shadow">
               <div className="flex items-center justify-between mb-4">
@@ -853,9 +850,9 @@ export default function AdminNewsletter() {
                   </p>
                   {lastGenDate && (
                     <p className="text-xs text-gray-400 mt-1">
-                      Última generación: {new Date(lastGenDate).toLocaleDateString('es-ES', { 
-                        year: 'numeric', 
-                        month: 'long', 
+                      Última generación: {new Date(lastGenDate).toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'long',
                         day: 'numeric',
                         hour: '2-digit',
                         minute: '2-digit'
@@ -866,14 +863,12 @@ export default function AdminNewsletter() {
                 <button
                   onClick={toggleAutoGeneration}
                   disabled={loading}
-                  className={`relative inline-flex h-10 w-20 items-center rounded-full transition-colors ${
-                    autoGenEnabled ? 'bg-green-600' : 'bg-gray-300'
-                  } ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  className={`relative inline-flex h-10 w-20 items-center rounded-full transition-colors ${autoGenEnabled ? 'bg-green-600' : 'bg-gray-300'
+                    } ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
                   <span
-                    className={`inline-block h-8 w-8 transform rounded-full bg-white transition-transform ${
-                      autoGenEnabled ? 'translate-x-10' : 'translate-x-1'
-                    }`}
+                    className={`inline-block h-8 w-8 transform rounded-full bg-white transition-transform ${autoGenEnabled ? 'translate-x-10' : 'translate-x-1'
+                      }`}
                   />
                 </button>
               </div>
@@ -881,7 +876,7 @@ export default function AdminNewsletter() {
                 <strong>Funcionamiento:</strong> El sistema extrae automáticamente los últimos 5 comunicados y 4 eventos de la galería para crear el newsletter mensual.
               </div>
             </div>
-            
+
             {/* Additional Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white p-6 rounded-lg shadow">
@@ -899,13 +894,13 @@ export default function AdminNewsletter() {
                   <TrendingUp className="w-12 h-12 text-blue-600" />
                 </div>
               </div>
-              
+
               <div className="bg-white p-6 rounded-lg shadow">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-gray-500 text-sm">Tasa de Actividad</p>
                     <p className="text-3xl font-bold text-green-600">
-                      {stats.totalSubscribers > 0 
+                      {stats.totalSubscribers > 0
                         ? Math.round((stats.activeSubscribers / stats.totalSubscribers) * 100)
                         : 0}%
                     </p>
@@ -917,7 +912,7 @@ export default function AdminNewsletter() {
                 </div>
               </div>
             </div>
-            
+
             {/* Growth Chart */}
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
@@ -1253,7 +1248,20 @@ export default function AdminNewsletter() {
         {activeTab === 'generated' && (
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-xl font-bold mb-4">Newsletters Generados</h2>
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <div>
+                  <h2 className="text-xl font-bold">Newsletters Generados</h2>
+                  <p className="text-sm text-gray-600">Gestione y exporte los resúmenes mensuales en formato peridístico A4.</p>
+                </div>
+                <button
+                  onClick={handleGenerateDraft}
+                  disabled={loading}
+                  className="w-full md:w-auto px-6 py-3 bg-red-600 text-white rounded-xl font-bold shadow-lg shadow-red-200 hover:bg-red-700 hover:scale-105 transition-all flex items-center justify-center gap-3"
+                >
+                  <Plus className="w-5 h-5" />
+                  Generar Boletín Mensual Automático
+                </button>
+              </div>
 
               <div className="space-y-4">
                 {newsletters.map((newsletter) => (
@@ -1265,11 +1273,11 @@ export default function AdminNewsletter() {
                           <h3 className="font-semibold text-gray-900">{newsletter.title}</h3>
                         </div>
                         <p className="text-sm text-gray-500">
-                          {newsletter.status === 'sent' 
+                          {newsletter.status === 'sent'
                             ? `Enviado el ${newsletter.sent_at ? new Date(newsletter.sent_at).toLocaleDateString('es-ES') : 'N/A'}`
                             : newsletter.status === 'published'
-                            ? 'Publicado'
-                            : 'Borrador'
+                              ? 'Publicado'
+                              : 'Borrador'
                           }
                         </p>
                       </div>
@@ -1294,7 +1302,7 @@ export default function AdminNewsletter() {
                           className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400 flex items-center gap-2"
                         >
                           <FileDown className="w-4 h-4" />
-                          Generar PDF
+                          Generar Versión Periódico (A4)
                         </button>
                       </div>
                     </div>
@@ -1367,7 +1375,7 @@ export default function AdminNewsletter() {
                   </svg>
                 </button>
               </div>
-              
+
               <div className="flex-1 overflow-auto">
                 {/* Editor Toolbar */}
                 <div className="border-b bg-gray-50 p-3">
@@ -1500,12 +1508,12 @@ export default function AdminNewsletter() {
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    <strong>Consejos:</strong> Use los botones de arriba para dar formato al texto, o escriba directamente. 
+                    <strong>Consejos:</strong> Use los botones de arriba para dar formato al texto, o escriba directamente.
                     El contenido se guardará con formato automático.
                   </p>
                 </div>
               </div>
-              
+
               <div className="p-4 border-t bg-gray-50 flex justify-end gap-3">
                 <button
                   onClick={() => {
@@ -1546,7 +1554,7 @@ export default function AdminNewsletter() {
                 </button>
               </div>
               <div className="flex-1 overflow-auto p-6">
-                <div 
+                <div
                   className="bg-white border rounded-lg p-6"
                   style={{
                     fontFamily: 'Arial, sans-serif',

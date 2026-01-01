@@ -9,6 +9,8 @@ import { Calendar, MessageSquare, ThumbsUp, ThumbsDown, Trash2, Reply, FileText,
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { usePWA_Inteligente as usePWA } from '@/hooks/usePWA_Inteligente';
+import { useNavigate } from 'react-router-dom';
 
 
 export default function ComunicadoDetailPage() {
@@ -22,6 +24,8 @@ export default function ComunicadoDetailPage() {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
   const [loading, setLoading] = useState(true);
+  const { state: pwaState } = usePWA();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (id) {
@@ -58,13 +62,13 @@ export default function ComunicadoDetailPage() {
       `)
       .eq('post_id', id)
       .order('created_at', { ascending: false });
-    
+
     if (data) setComments(data);
   }
 
   async function loadReplies() {
     if (comments.length === 0) return;
-    
+
     const { data } = await supabase
       .from('comment_replies')
       .select(`
@@ -73,7 +77,7 @@ export default function ComunicadoDetailPage() {
       `)
       .in('comment_id', comments.map(c => c.id))
       .order('created_at', { ascending: true });
-    
+
     if (data) {
       const grouped = data.reduce((acc, reply) => {
         if (!acc[reply.comment_id]) acc[reply.comment_id] = [];
@@ -86,12 +90,12 @@ export default function ComunicadoDetailPage() {
 
   async function loadReactions() {
     if (comments.length === 0) return;
-    
+
     const { data } = await supabase
       .from('comment_reactions')
       .select('*')
       .in('comment_id', comments.map(c => c.id));
-    
+
     if (data) {
       const grouped = data.reduce((acc, reaction) => {
         if (!acc[reaction.comment_id]) acc[reaction.comment_id] = [];
@@ -288,7 +292,7 @@ export default function ComunicadoDetailPage() {
               <Calendar className="h-4 w-4 mr-2" />
               <span>{format(new Date(communique.created_at), "d 'de' MMMM, yyyy", { locale: es })}</span>
               {communique.category && (
-                <span 
+                <span
                   className="ml-4 px-3 py-1 text-white rounded-full text-sm font-semibold"
                   style={{ backgroundColor: communique.category.color }}
                 >
@@ -296,23 +300,23 @@ export default function ComunicadoDetailPage() {
                 </span>
               )}
             </div>
-            
+
             {/* Botones de compartir en redes sociales */}
-            <ShareButtons 
+            <ShareButtons
               url={window.location.href}
               title={communique.title}
               description={communique.content.replace(/<[^>]*>/g, '').substring(0, 150)}
             />
-            
+
             <div className="prose max-w-none mt-6">
               {communique.image_url && (
-                <img 
-                  src={communique.image_url} 
+                <img
+                  src={communique.image_url}
                   alt={communique.title}
                   className="w-full h-auto rounded-lg mb-6"
                 />
               )}
-              <div 
+              <div
                 className="prose prose-lg max-w-none text-gray-700"
                 dangerouslySetInnerHTML={{ __html: communique.content }}
               />
@@ -330,18 +334,29 @@ export default function ComunicadoDetailPage() {
                   {communique.attachments.map((attachment: any, index: number) => {
                     const isImage = attachment.fileType?.startsWith('image/');
                     const isPDF = attachment.fileType === 'application/pdf';
-                    const fileSize = attachment.fileSize ? 
+                    const fileSize = attachment.fileSize ?
                       (attachment.fileSize < 1024 ? `${attachment.fileSize} B` :
-                       attachment.fileSize < 1024 * 1024 ? `${(attachment.fileSize / 1024).toFixed(1)} KB` :
-                       `${(attachment.fileSize / (1024 * 1024)).toFixed(1)} MB`) : '';
+                        attachment.fileSize < 1024 * 1024 ? `${(attachment.fileSize / 1024).toFixed(1)} KB` :
+                          `${(attachment.fileSize / (1024 * 1024)).toFixed(1)} MB`) : '';
 
                     return (
-                      <a
+                      <button
                         key={index}
-                        href={attachment.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-300 hover:border-red-500 hover:shadow-md transition group"
+                        onClick={() => {
+                          if (!pwaState.isInstalled) {
+                            toast.error("Función exclusiva de la App", {
+                              description: "Instala la App de UGT Towa para descargar documentos y consultarlos sin conexión.",
+                              action: {
+                                label: "Instalar",
+                                onClick: () => navigate('/instalar')
+                              },
+                              duration: 10000
+                            });
+                          } else {
+                            window.open(attachment.url, '_blank');
+                          }
+                        }}
+                        className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-300 hover:border-red-500 hover:shadow-md transition group text-left w-full"
                       >
                         <FileText className="h-8 w-8 text-red-600 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
@@ -356,7 +371,7 @@ export default function ComunicadoDetailPage() {
                           </p>
                         </div>
                         <Download className="h-5 w-5 text-red-600 flex-shrink-0 opacity-0 group-hover:opacity-100 transition" />
-                      </a>
+                      </button>
                     );
                   })}
                 </div>
@@ -417,18 +432,16 @@ export default function ComunicadoDetailPage() {
                           <>
                             <button
                               onClick={() => handleReaction(comment.id, 'like')}
-                              className={`flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 ${
-                                userReaction?.reaction_type === 'like' ? 'text-red-600' : 'text-gray-500'
-                              }`}
+                              className={`flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 ${userReaction?.reaction_type === 'like' ? 'text-red-600' : 'text-gray-500'
+                                }`}
                             >
                               <ThumbsUp className="h-4 w-4" />
                               <span className="text-sm">{likes}</span>
                             </button>
                             <button
                               onClick={() => handleReaction(comment.id, 'dislike')}
-                              className={`flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 ${
-                                userReaction?.reaction_type === 'dislike' ? 'text-red-600' : 'text-gray-500'
-                              }`}
+                              className={`flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 ${userReaction?.reaction_type === 'dislike' ? 'text-red-600' : 'text-gray-500'
+                                }`}
                             >
                               <ThumbsDown className="h-4 w-4" />
                               <span className="text-sm">{dislikes}</span>

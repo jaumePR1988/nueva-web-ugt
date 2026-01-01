@@ -163,8 +163,8 @@ Deno.serve(async (req) => {
 });
 
 function generateNewsletterHTML(contentByType: any, monthName: string, qrCode: any = null): string {
-    const baseUrl = Deno.env.get('SUPABASE_URL') || '';
-    
+    const baseUrl = "https://towa-ugt.es"; // URL base real del portal
+
     return `
 <!DOCTYPE html>
 <html lang="es">
@@ -173,191 +173,256 @@ function generateNewsletterHTML(contentByType: any, monthName: string, qrCode: a
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Newsletter UGT Towa - ${monthName}</title>
     <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
         body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            line-height: 1.4;
+            color: #1a1a1a;
+            margin: 0;
+            padding: 0;
+            background-color: white;
+        }
+        .a4-container {
+            width: 100%;
+            max-width: 210mm;
+            min-height: 297mm;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
+            position: relative;
         }
-        .container {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+        /* Header Estilo Periódico */
         .header {
-            background-color: #e50000;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            border-radius: 8px 8px 0 0;
-            margin: -30px -30px 30px -30px;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-        }
-        .section {
-            margin-bottom: 30px;
-        }
-        .section-title {
-            color: #e50000;
-            font-size: 20px;
-            font-weight: bold;
-            border-bottom: 2px solid #e50000;
-            padding-bottom: 8px;
-            margin-bottom: 15px;
-        }
-        .content-item {
+            border-bottom: 4px solid #e50000;
             margin-bottom: 20px;
-            padding: 15px;
-            background-color: #f9f9f9;
-            border-left: 4px solid #e50000;
-            border-radius: 4px;
-        }
-        .content-item h3 {
-            margin: 0 0 10px 0;
-            color: #333;
-            font-size: 18px;
-        }
-        .content-item p {
-            margin: 0;
-            color: #666;
-        }
-        .content-item img {
-            max-width: 100%;
-            height: auto;
-            margin-top: 10px;
-            border-radius: 4px;
-        }
-        .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            text-align: center;
-            color: #666;
-            font-size: 12px;
-        }
-        .statistics {
+            padding-bottom: 15px;
             display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-end;
         }
-        .stat-box {
-            background-color: #e50000;
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            margin: 10px;
+        .header-main {
+            flex: 2;
+        }
+        .header-logo {
+            font-size: 48px;
+            font-weight: 900;
+            color: #e50000;
+            margin: 0;
+            letter-spacing: -2px;
+            text-transform: uppercase;
+        }
+        .header-subtitle {
+            font-size: 16px;
+            font-weight: bold;
+            color: #666;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .header-date {
+            text-align: right;
+            font-weight: bold;
+            color: #e50000;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+
+        /* Layout de 2 Columnas */
+        .columns {
+            display: flex;
+            gap: 20px;
+        }
+        .column-main {
+            flex: 2;
+        }
+        .column-side {
             flex: 1;
-            min-width: 150px;
+            padding-left: 20px;
+            border-left: 1px solid #ddd;
         }
-        .stat-number {
-            font-size: 32px;
+
+        .section-title {
+            background-color: #1a1a1a;
+            color: white;
+            padding: 5px 15px;
+            font-size: 14px;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        .news-item {
+            margin-bottom: 25px;
+            position: relative;
+        }
+        .news-item h3 {
+            font-size: 22px;
+            font-weight: 900;
+            margin: 0 0 10px 0;
+            line-height: 1.1;
+            color: #e50000;
+        }
+        .news-content {
+            font-size: 13px;
+            color: #333;
+            margin: 0;
+            text-align: justify;
+        }
+        .news-footer {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .qr-small {
+            width: 60px;
+            height: 60px;
+            border: 1px solid #eee;
+            padding: 2px;
+        }
+        .qr-label {
+            font-size: 9px;
+            color: #999;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .event-item {
+            padding: 10px;
+            background-color: #f8f8f8;
+            margin-bottom: 10px;
+            border-left: 3px solid #e50000;
+        }
+        .event-item h4 {
+            margin: 0;
+            font-size: 14px;
+            color: #1a1a1a;
+        }
+        .event-date {
+            font-size: 11px;
+            color: #e50000;
             font-weight: bold;
         }
-        .stat-label {
-            font-size: 14px;
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background-color: #e50000;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            border-radius: 4px;
+        }
+        .stat-card .val { font-size: 24px; font-weight: 900; }
+        .stat-card .lab { font-size: 10px; text-transform: uppercase; font-weight: bold; }
+
+        .app-promo {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: white;
+            text-align: center;
+            border-radius: 8px;
+        }
+        .app-promo h4 { margin: 0 0 10px 0; font-size: 16px; color: #e50000; }
+        .app-promo p { font-size: 11px; margin-bottom: 15px; }
+
+        .footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            font-size: 10px;
+            color: #999;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Newsletter UGT Towa</h1>
-            <p>${monthName}</p>
-        </div>
+    <div class="a4-container">
+        <header class="header">
+            <div class="header-main">
+                <h1 class="header-logo">UGT TOWA</h1>
+                <p class="header-subtitle">Resumen Mensual de Actividad Sindical</p>
+            </div>
+            <div class="header-date">
+                ${monthName}
+            </div>
+        </header>
 
-        ${contentByType.news.length > 0 ? `
-        <div class="section">
-            <h2 class="section-title">Noticias</h2>
-            ${contentByType.news.map(item => `
-                <div class="content-item">
-                    <h3>${item.title}</h3>
-                    <p>${item.content}</p>
-                    ${item.image_url ? `<img src="${item.image_url}" alt="${item.title}" />` : ''}
+        <div class="columns">
+            <!-- Columna Principal -->
+            <div class="column-main">
+                <div class="section-title">Noticias Destacadas</div>
+                
+                ${contentByType.news.map((item: any) => `
+                    <article class="news-item">
+                        <h3>${item.title}</h3>
+                        <p class="news-content">${item.content}</p>
+                        <div class="news-footer">
+                            <img class="qr-small" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(baseUrl + '/comunicados')}" alt="QR" />
+                            <span class="qr-label">Escanea para leer más<br/>en el portal</span>
+                        </div>
+                    </article>
+                `).join('')}
+
+                ${contentByType.directives.length > 0 ? `
+                    <div class="section-title">Comunicados</div>
+                    ${contentByType.directives.map((item: any) => `
+                        <div class="news-item">
+                            <h4 style="margin:0; font-size:16px;">${item.title}</h4>
+                            <p class="news-content" style="font-size:12px;">${item.content}</p>
+                        </div>
+                    `).join('')}
+                ` : ''}
+            </div>
+
+            <!-- Columna Lateral -->
+            <div class="column-side">
+                <div class="section-title">En Cifras</div>
+                <div class="stat-grid">
+                    ${contentByType.statistics.map((item: any) => `
+                        <div class="stat-card">
+                            <div class="val">${item.title}</div>
+                            <div class="lab">${item.content}</div>
+                        </div>
+                    `).join('')}
+                    ${contentByType.statistics.length === 0 ? `
+                        <div class="stat-card" style="grid-column: span 2;">
+                            <div class="val">TOWA</div>
+                            <div class="lab">Unidos por tus derechos</div>
+                        </div>
+                    ` : ''}
                 </div>
-            `).join('')}
-        </div>
-        ` : ''}
 
-        ${contentByType.statistics.length > 0 ? `
-        <div class="section">
-            <h2 class="section-title">Estadísticas del Mes</h2>
-            <div class="statistics">
-                ${contentByType.statistics.map(item => `
-                    <div class="stat-box">
-                        <div class="stat-number">${item.title}</div>
-                        <div class="stat-label">${item.content}</div>
+                <div class="section-title">Agenda</div>
+                ${contentByType.events.map((item: any) => `
+                    <div class="event-item">
+                        <h4>${item.title}</h4>
+                        <div class="event-date">Próximamente</div>
+                        <p style="font-size:11px; margin:5px 0 0 0;">${item.content.substring(0, 100)}...</p>
                     </div>
                 `).join('')}
+
+                <div class="app-promo">
+                    <h4>INSTALA NUESTRA APP</h4>
+                    <p>Acceso VIP a documentos, tablas salariales y notificaciones urgentes.</p>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(baseUrl + '/instalar')}" alt="QR App" style="width:100px; height:100px; background:white; padding:5px; border-radius:4px;" />
+                    <p style="margin-top:10px; font-weight:bold;">TOWA-UGT.ES/INSTALAR</p>
+                </div>
             </div>
         </div>
-        ` : ''}
 
-        ${contentByType.events.length > 0 ? `
-        <div class="section">
-            <h2 class="section-title">Próximos Eventos</h2>
-            ${contentByType.events.map(item => `
-                <div class="content-item">
-                    <h3>${item.title}</h3>
-                    <p>${item.content}</p>
-                    ${item.image_url ? `<img src="${item.image_url}" alt="${item.title}" />` : ''}
-                </div>
-            `).join('')}
-        </div>
-        ` : ''}
-
-        ${contentByType.directives.length > 0 ? `
-        <div class="section">
-            <h2 class="section-title">Comunicados Importantes</h2>
-            ${contentByType.directives.map(item => `
-                <div class="content-item">
-                    <h3>${item.title}</h3>
-                    <p>${item.content}</p>
-                </div>
-            `).join('')}
-        </div>
-        ` : ''}
-
-        ${contentByType.suggestions.length > 0 ? `
-        <div class="section">
-            <h2 class="section-title">Sugerencias Destacadas</h2>
-            ${contentByType.suggestions.map(item => `
-                <div class="content-item">
-                    <h3>${item.title}</h3>
-                    <p>${item.content}</p>
-                </div>
-            `).join('')}
-        </div>
-        ` : ''}
-
-        ${qrCode ? `
-        <div class="section" style="text-align: center; margin-top: 40px;">
-            <h2 class="section-title">Afiliate a UGT</h2>
-            <div style="display: inline-block; border: 4px solid #e50000; border-radius: 8px; padding: 20px; background-color: white;">
-                <img src="${qrCode.image_url}" alt="QR de Afiliacion UGT" style="max-width: 200px; width: 100%; height: auto; margin: 0 auto; display: block;" />
-                ${qrCode.description ? `<p style="margin-top: 15px; color: #666; font-size: 14px;">${qrCode.description}</p>` : ''}
-            </div>
-        </div>
-        ` : ''}
-
-        <div class="footer">
-            <p><strong>UGT - Sección Sindical Towa Pharmaceutical Europe</strong></p>
-            <p>Comprometidos con la defensa de los derechos laborales y el bienestar de todos los trabajadores</p>
-            <p style="margin-top: 10px;">
-                <strong>Contacto:</strong><br />
-                Email: jpedragosa@towapharmaceutical.com<br />
-                Dirección: Polígono Industrial, Carrer de Sant Martí, 75-97, 08107 Martorelles, Barcelona
-            </p>
-            <p style="margin-top: 10px; font-size: 11px; color: #999;">
-                © 2025 UGT Towa Pharmaceutical Europe. Todos los derechos reservados.
-            </p>
-        </div>
+        <footer class="footer">
+            UGT Sección Sindical Towa Pharmaceutical Europe | Martorelles, Barcelona | jpedragosa@towapharmaceutical.com
+        </footer>
     </div>
 </body>
 </html>

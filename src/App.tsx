@@ -21,6 +21,7 @@ import NewsletterPage from './pages/NewsletterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import GaleriaPage from './pages/GaleriaPage';
+import InstallPWAPage from './pages/InstallPWAPage';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -69,12 +70,12 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Toaster position="top-right" richColors />
-        
+
         {/* PWA Install Prompt */}
-        <PWAInstallPrompt 
+        <PWAInstallPrompt
           onInstall={install}
         />
-        
+
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
@@ -89,8 +90,9 @@ function App() {
           <Route path="/newsletter" element={<NewsletterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/instalar" element={<InstallPWAPage />} />
 
-          
+
           {/* Protected Routes */}
           <Route
             path="/citas"
@@ -108,7 +110,7 @@ function App() {
               </PrivateRoute>
             }
           />
-          
+
           {/* Affiliate Routes */}
           <Route
             path="/afiliados"
@@ -148,7 +150,7 @@ function App() {
               </TestAffiliateRoute>
             }
           />
-          
+
           {/* Admin Routes */}
           <Route
             path="/admin/dashboard"
@@ -312,7 +314,7 @@ function App() {
               </AdminRoute>
             }
           />
-          
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

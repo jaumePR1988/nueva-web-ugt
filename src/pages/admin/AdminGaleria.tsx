@@ -153,6 +153,7 @@ export default function AdminGaleria() {
   }
 
   async function toggleActive(id: string, currentStatus: boolean) {
+    const toastId = toast.loading(currentStatus ? 'Ocultando imagen...' : 'Activando imagen...');
     try {
       const { error } = await supabase
         .from('event_images')
@@ -162,56 +163,72 @@ export default function AdminGaleria() {
       if (error) throw error;
 
       toast.success(
-        currentStatus ? 'Imagen ocultada' : 'Imagen activada'
+        currentStatus ? 'Imagen ocultada correctamente' : 'Imagen activada correctamente',
+        { id: toastId }
       );
       loadImages();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Toggle error:', error);
-      toast.error('Error al cambiar estado');
+      toast.error(`Error: ${error.message || 'No se pudo cambiar el estado'}`, { id: toastId });
     }
   }
 
   async function deleteImage(image: EventImage) {
-    if (!confirm(`¿Estás seguro de eliminar la imagen "${image.title}" permanentemente?\n\nEsta acción no se puede deshacer.`)) {
-      return;
-    }
+    console.log('Solicitando eliminación de imagen:', image.id);
 
-    // Guardar copia del estado anterior por si falla la eliminación
+    toast.warning(`¿Eliminar "${image.title}"?`, {
+      description: "Esta acción es permanente.",
+      action: {
+        label: "Confirmar Borrado",
+        onClick: () => executeDelete(image)
+      },
+      duration: 5000,
+    });
+  }
+
+  async function executeDelete(image: EventImage) {
+    const toastId = toast.loading('Eliminando de forma permanente...');
     const previousImages = [...images];
 
-    // Feedback inmediato: eliminar del estado local
-    setImages(images.filter(img => img.id !== image.id));
-
     try {
-      // 1. Eliminar de la base de datos
+      // 1. Eliminar de la base de datos primero para asegurar permisos
       const { error: dbError } = await supabase
         .from('event_images')
         .delete()
         .eq('id', image.id);
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error('Error DB al borrar:', dbError);
+        throw new Error(`Error de base de datos: ${dbError.message}`);
+      }
 
       // 2. Extraer el nombre del archivo de la URL e intentar eliminar de Storage
       try {
         const urlParts = image.image_url.split('/');
+        // Supabase URLs usually follow: .../public/bucket-name/filename
         const fileName = urlParts[urlParts.length - 1];
 
         if (fileName) {
-          await supabase.storage
+          const { error: storageError } = await supabase.storage
             .from('event-images')
             .remove([fileName]);
+
+          if (storageError) {
+            console.warn('Error no crítico al borrar de Storage:', storageError);
+          }
         }
       } catch (storageError) {
-        console.error('Error deleting file from storage:', storageError);
-        // No lanzamos error aquí porque el registro de la DB ya se borró
+        console.error('Excepción al borrar de storage:', storageError);
       }
 
-      toast.success('Imagen eliminada correctamente');
+      // Feedback exitoso: actualizar estado local
+      setImages(prev => prev.filter(img => img.id !== image.id));
+      toast.success('Imagen eliminada correctamente', { id: toastId });
     } catch (error: any) {
-      console.error('Delete error:', error);
-      // Revertir estado local en caso de error
-      setImages(previousImages);
-      toast.error(`Error al eliminar: ${error.message || 'Error desconocido'}`);
+      console.error('Error fatal detectado al borrar:', error);
+      toast.error(`No se pudo eliminar: ${error.message || 'Error desconocido'}`, { id: toastId });
+      // Recargar para sincronizar estado real si falló
+      loadImages();
     }
   }
 
@@ -228,7 +245,7 @@ export default function AdminGaleria() {
             </div>
             <div>
               <p className="text-gray-500 font-bold uppercase tracking-widest text-xs mb-1">Gestión Visual</p>
-              <h1 className="text-4xl font-black text-gray-900 tracking-tight">Galería de Eventos</h1>
+              <h1 className="text-2xl font-black text-gray-900 tracking-tight">Galería de Eventos</h1>
             </div>
           </div>
         </div>
@@ -311,10 +328,22 @@ export default function AdminGaleria() {
             </div>
 
             {previewUrl && (
-              <div className="p-4 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4">
-                  Vista Previa
-                </p>
+              <div className="p-6 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+                <div className="flex justify-between items-center mb-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                    Vista Previa
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedFile(null);
+                      setPreviewUrl(null);
+                    }}
+                    className="text-[10px] font-black uppercase tracking-widest text-red-600 hover:text-red-800 transition bg-red-50 px-3 py-1 rounded-full"
+                  >
+                    Eliminar Selección
+                  </button>
+                </div>
                 <img
                   src={previewUrl}
                   alt="Preview"
@@ -403,8 +432,11 @@ export default function AdminGaleria() {
 
                     <div className="flex gap-3">
                       <button
-                        onClick={() => toggleActive(image.id, image.is_active)}
-                        className={`flex-1 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center shadow-sm ${image.is_active
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleActive(image.id, image.is_active);
+                        }}
+                        className={`flex-1 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center shadow-sm z-10 ${image.is_active
                           ? 'bg-orange-50 text-orange-700 hover:bg-orange-600 hover:text-white'
                           : 'bg-green-50 text-green-700 hover:bg-green-600 hover:text-white'
                           }`}
@@ -423,8 +455,11 @@ export default function AdminGaleria() {
                       </button>
 
                       <button
-                        onClick={() => deleteImage(image)}
-                        className="px-4 py-3 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl transition-all shadow-sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteImage(image);
+                        }}
+                        className="px-4 py-3 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl transition-all shadow-sm z-10"
                         title="Eliminar permanentemente"
                       >
                         <Trash2 className="h-4 w-4" />

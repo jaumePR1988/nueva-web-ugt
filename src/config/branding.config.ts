@@ -17,7 +17,7 @@ export const BRANDING = {
         glassOpacity: "0.98",     // Nearly solid
         glassBlur: "4px",         // Minimal blur
         transitionSpeed: "0.2s",  // Snappy
-        fontFamily: "'Inter', sans-serif"
+        fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
     },
 
     // SEO & Social

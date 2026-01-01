@@ -31,5 +31,28 @@ Esta es la opción más escalable y la que recomiendo si vas a gestionar 10+ sed
    - Solo un despliegue de código.
    - Evitas problemas de inactividad (siempre habrá alguien usando alguna sede).
 
-## Próximos Pasos para Facilitar la Replicación:
-He creado el archivo `src/config/branding.config.ts` para que puedas cambiar la identidad visual en un solo lugar.
+## Herramientas de Personalización (Replicabilidad)
+
+Para que el portal sea replicable en cuestión de minutos, he centralizado los puntos clave:
+
+### 1. Identidad Visual (`src/config/branding.config.ts`)
+Modifica este archivo para cambiar:
+- **Nombre de la empresa** y siglas.
+- **Logo** (debe estar en la carpeta `public`).
+- **Colores corporativos** (Primario, Secundario, Acentos).
+- **Tipografía** y diseño de botones (bordes redondeados, etc.).
+
+### 2. Automatización de Citas
+Ya no necesitas crear cada hueco manualmente en Supabase:
+- El sistema genera automáticamente slots de **08:00 a 16:30** cada hora.
+- Solo debes configurar los **Delegados** en la tabla de perfiles (marcandolos como `is_admin`) para que puedan gestionar sus bloqueos.
+- La tabla `appointment_slots` ahora solo se usa para **bloqueos excepcionales** (vacaciones, reuniones externas).
+
+### 3. Requisitos de Infraestructura (NUEVO)
+Para una réplica funcional al 100%, asegúrate de:
+- **VAPID Keys**: Generar un par de claves para las notificaciones Push y poner la pública en el `.env`.
+- **Edge Functions**: Desplegar las funciones de la carpeta `supabase/functions`.
+- **Secrets**: Configurar `RESEND_API_KEY` (si se usa para emails) y `VAPID_PRIVATE_KEY` en los secretos de Supabase (`supabase secrets set`).
+
+---
+*Esta guía se actualiza a medida que añadimos nuevas funcionalidades modulares.*

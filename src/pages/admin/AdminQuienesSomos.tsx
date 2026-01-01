@@ -9,16 +9,17 @@ export default function AdminQuienesSomos() {
   const [delegates, setDelegates] = useState<Delegate[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ 
-    full_name: '', 
-    role_type: 'comite', 
-    bio: '', 
+  const [formData, setFormData] = useState({
+    full_name: '',
+    role_type: 'comite',
+    bio: '',
     photo_url: '',
     position: '',
     email: '',
     phone: '',
     description: '',
-    active: true
+    active: true,
+    display_order: 1
   });
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -37,7 +38,7 @@ export default function AdminQuienesSomos() {
 
   async function handlePhotoUpload() {
     if (!selectedFile) return;
-    
+
     setUploading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -78,17 +79,18 @@ export default function AdminQuienesSomos() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
+
     const submitData = {
       full_name: formData.full_name,
       role_type: formData.role_type,
-      bio: formData.bio,
+      bio: formData.bio.trim(),
       photo_url: formData.photo_url,
       position: formData.position || null,
       email: formData.email || null,
       phone: formData.phone || null,
-      description: formData.description || formData.bio,
-      active: formData.active
+      description: (formData.description || formData.bio).trim(),
+      active: formData.active,
+      display_order: formData.display_order
     };
 
     if (editingId) {
@@ -106,16 +108,17 @@ export default function AdminQuienesSomos() {
   }
 
   function resetForm() {
-    setFormData({ 
-      full_name: '', 
-      role_type: 'comite', 
-      bio: '', 
+    setFormData({
+      full_name: '',
+      role_type: 'comite',
+      bio: '',
       photo_url: '',
       position: '',
       email: '',
       phone: '',
       description: '',
-      active: true
+      active: true,
+      display_order: delegates.length + 1
     });
     setEditingId(null);
     setShowForm(false);
@@ -123,6 +126,7 @@ export default function AdminQuienesSomos() {
   }
 
   function handleEdit(delegate: Delegate) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setFormData({
       full_name: delegate.full_name,
       role_type: delegate.role_type,
@@ -132,7 +136,8 @@ export default function AdminQuienesSomos() {
       email: delegate.email || '',
       phone: delegate.phone || '',
       description: delegate.description || delegate.bio,
-      active: delegate.active !== false
+      active: delegate.active !== false,
+      display_order: delegate.display_order || 0
     });
     setEditingId(delegate.id);
     setShowForm(true);
@@ -159,58 +164,70 @@ export default function AdminQuienesSomos() {
         {showForm && (
           <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow mb-8">
             <h2 className="text-xl font-bold mb-4">{editingId ? 'Editar Perfil' : 'Nuevo Perfil'}</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
-                <input 
-                  type="text" 
-                  placeholder="Nombre completo" 
-                  value={formData.full_name} 
-                  onChange={e => setFormData({...formData, full_name: e.target.value})} 
-                  className="w-full p-3 border rounded" 
-                  required 
+                <input
+                  type="text"
+                  placeholder="Nombre completo"
+                  value={formData.full_name}
+                  onChange={e => setFormData({ ...formData, full_name: e.target.value })}
+                  className="w-full p-3 border rounded"
+                  required
                 />
               </div>
-              
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Orden de Visualización</label>
+                <input
+                  type="number"
+                  placeholder="Ej: 1"
+                  value={formData.display_order}
+                  onChange={e => setFormData({ ...formData, display_order: parseInt(e.target.value) || 0 })}
+                  className="w-full p-3 border rounded"
+                />
+                <p className="text-[10px] text-gray-500 mt-0.5">Define la posición en la lista (menor número = primero)</p>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Cargo/Posición</label>
                 <div className="relative">
                   <Briefcase className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-                  <input 
-                    type="text" 
-                    placeholder="Ej: Delegado Sindical Principal" 
-                    value={formData.position} 
-                    onChange={e => setFormData({...formData, position: e.target.value})} 
-                    className="w-full p-3 pl-10 border rounded" 
+                  <input
+                    type="text"
+                    placeholder="Ej: Delegado Sindical Principal"
+                    value={formData.position}
+                    onChange={e => setFormData({ ...formData, position: e.target.value })}
+                    className="w-full p-3 pl-10 border rounded"
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-                  <input 
-                    type="email" 
-                    placeholder="correo@ejemplo.com" 
-                    value={formData.email} 
-                    onChange={e => setFormData({...formData, email: e.target.value})} 
-                    className="w-full p-3 pl-10 border rounded" 
+                  <input
+                    type="email"
+                    placeholder="correo@ejemplo.com"
+                    value={formData.email}
+                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full p-3 pl-10 border rounded"
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-                  <input 
-                    type="tel" 
-                    placeholder="+34 XXX XXX XXX" 
-                    value={formData.phone} 
-                    onChange={e => setFormData({...formData, phone: e.target.value})} 
-                    className="w-full p-3 pl-10 border rounded" 
+                  <input
+                    type="tel"
+                    placeholder="+34 XXX XXX XXX"
+                    value={formData.phone}
+                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full p-3 pl-10 border rounded"
                   />
                 </div>
               </div>
@@ -218,9 +235,9 @@ export default function AdminQuienesSomos() {
 
             <div className="mt-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Rol *</label>
-              <select 
-                value={formData.role_type} 
-                onChange={e => setFormData({...formData, role_type: e.target.value as any})} 
+              <select
+                value={formData.role_type}
+                onChange={e => setFormData({ ...formData, role_type: e.target.value as any })}
                 className="w-full p-3 border rounded"
               >
                 <option value="comite">Comité de Empresa</option>
@@ -228,43 +245,42 @@ export default function AdminQuienesSomos() {
                 <option value="prevencion">Prevención de Riesgos</option>
               </select>
             </div>
-            
+
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Biografía Breve *</label>
-              <textarea 
-                placeholder="Descripción breve para la tarjeta de perfil" 
-                value={formData.bio} 
-                onChange={e => setFormData({...formData, bio: e.target.value})} 
-                className="w-full p-3 border rounded" 
+              <label className="block text-sm font-medium text-gray-700 mb-1">Biografía Breve</label>
+              <textarea
+                placeholder="Descripción breve para la tarjeta de perfil"
+                value={formData.bio}
+                onChange={e => setFormData({ ...formData, bio: e.target.value })}
+                className="w-full p-3 border rounded"
                 rows={2}
-                required 
               />
             </div>
-            
+
             <div className="mt-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">Descripción Completa</label>
-              <textarea 
-                placeholder="Descripción detallada, experiencia, responsabilidades..." 
-                value={formData.description} 
-                onChange={e => setFormData({...formData, description: e.target.value})} 
-                className="w-full p-3 border rounded" 
+              <textarea
+                placeholder="Descripción detallada, experiencia, responsabilidades..."
+                value={formData.description}
+                onChange={e => setFormData({ ...formData, description: e.target.value })}
+                className="w-full p-3 border rounded"
                 rows={4}
               />
               <p className="text-xs text-gray-500 mt-1">Si se deja vacío, se usará la biografía breve</p>
             </div>
-            
+
             <div className="mt-4">
               <label className="flex items-center">
-                <input 
-                  type="checkbox" 
-                  checked={formData.active} 
-                  onChange={e => setFormData({...formData, active: e.target.checked})} 
+                <input
+                  type="checkbox"
+                  checked={formData.active}
+                  onChange={e => setFormData({ ...formData, active: e.target.checked })}
                   className="mr-2 h-4 w-4"
                 />
                 <span className="text-sm font-medium text-gray-700">Perfil activo (visible en la página pública)</span>
               </label>
             </div>
-            
+
             <div className="mt-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Foto del Perfil (opcional)</label>
               {formData.photo_url ? (
@@ -312,8 +328,8 @@ export default function AdminQuienesSomos() {
               <div className="p-6">
                 <div className="flex items-center mb-4">
                   {del.photo_url ? (
-                    <img 
-                      src={del.photo_url} 
+                    <img
+                      src={del.photo_url}
                       alt={del.full_name}
                       className="h-20 w-20 rounded-full object-cover border-4 border-red-100 mr-4"
                     />
@@ -324,18 +340,31 @@ export default function AdminQuienesSomos() {
                   )}
                   <div className="flex-1">
                     <h3 className="font-bold text-lg text-gray-900">{del.full_name}</h3>
-                    <span className="inline-block px-2 py-1 text-xs bg-red-100 text-red-700 rounded capitalize">
-                      {del.role_type}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="inline-block px-2 py-1 text-xs bg-red-100 text-red-700 rounded capitalize">
+                        {del.role_type}
+                      </span>
+                      <span className="text-[10px] text-gray-400 font-bold uppercase">
+                        Orden: {del.display_order}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-4">{del.bio}</p>
-                <button 
-                  onClick={() => handleDelete(del.id)} 
-                  className="text-red-600 hover:bg-red-50 px-3 py-1 rounded transition"
-                >
-                  <Trash2 className="h-4 w-4 inline mr-1" /> Eliminar
-                </button>
+                <p className="text-sm text-gray-600 mb-4 line-clamp-2">{del.bio}</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEdit(del)}
+                    className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+                  >
+                    <Edit2 className="h-4 w-4" /> Editar
+                  </button>
+                  <button
+                    onClick={() => handleDelete(del.id)}
+                    className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition"
+                  >
+                    <Trash2 className="h-4 w-4" /> Eliminar
+                  </button>
+                </div>
               </div>
             </div>
           ))}

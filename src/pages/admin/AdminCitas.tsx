@@ -1,18 +1,28 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { supabase, Appointment } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { format, parseISO, subDays, eachDayOfInterval, getHours, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
+import { format, parseISO, subDays, startOfDay, endOfDay, isWithinInterval, getHours } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { exportToExcel, exportToPDF, exportToCSV } from '@/lib/utils';
-
+import { useAppointments } from '@/hooks/useAppointments';
+import {
+  Notification,
+  UserOption,
+  AdvancedFilters,
+  AppointmentConfig,
+  ReportFilters,
+  AttendanceReport,
+  ReportSummary,
+  AlertSetting
+} from '@/types/appointments';
 
 export const TIME_SLOTS = [
   '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'
 ];
 
-// New Modular Components
+// Modular Components
 import { CitasStatsCards } from '@/components/admin/citas/CitasStatsCards';
 import { CitasTabsNavigation } from '@/components/admin/citas/CitasTabsNavigation';
 import { CitasExportButtons } from '@/components/admin/citas/CitasExportButtons';
@@ -32,179 +42,36 @@ import {
 import { DateRange, DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 
-interface Notification {
-  id: string;
-  appointment_id: string;
-  type: string;
-  title: string;
-  message: string;
-  created_at: string;
-  read: boolean;
-  user_email: string | null;
-  user_full_name: string | null;
-  delegate_type: string | null;
-  appointment_time: string | null;
-}
-
-interface AppointmentStats {
-  today: number;
-  upcoming: number;
-  pending: number;
-  completed: number;
-}
-
-interface UserOption {
-  id: string;
-  full_name: string;
-  email: string;
-}
-
-interface AdvancedFilters {
-  searchTerm: string;
-  selectedUser: UserOption | null;
-  dateRange: DateRange | undefined;
-  timeFilter: 'all' | 'morning' | 'afternoon';
-  showDatePicker: boolean;
-}
-
-interface DailyStats {
-  date: string;
-  appointments: number;
-}
-
-interface PeakHours {
-  hour: number;
-  count: number;
-}
-
-interface UserStats {
-  id: string;
-  full_name: string;
-  email: string;
-  appointment_count: number;
-  last_appointment: string;
-}
-
-interface AttendanceRate {
-  completed: number;
-  total: number;
-  percentage: number;
-}
-
-interface ConfirmationRate {
-  confirmed: number;
-  pending: number;
-  percentage: number;
-}
-
-interface AppointmentConfig {
-  id: number;
-  user_id: string;
-  reminder_24h: boolean;
-  reminder_2h: boolean;
-  custom_reminder: boolean;
-  preferred_start_time: string | null;
-  preferred_end_time: string | null;
-  preferred_days: string[];
-  admin_users: string[];
-  notification_templates: {
-    confirmation_subject: string;
-    confirmation_body: string;
-    cancellation_subject: string;
-    cancellation_body: string;
-    reminder_subject: string;
-    reminder_body: string;
-  };
-  alert_settings: {
-    email_notifications: boolean;
-    browser_notifications: boolean;
-    reminder_notifications: boolean;
-    status_change_notifications: boolean;
-  };
-}
-
-interface NotificationTemplate {
-  name: string;
-  subject: string;
-  body: string;
-}
-
-interface AlertSetting {
-  name: string;
-  enabled: boolean;
-  description: string;
-}
-
-interface ReportFilters {
-  period: 'all' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
-  startDate?: Date;
-  endDate?: Date;
-  exportType: 'csv' | 'excel' | 'pdf';
-  includeCharts: boolean;
-  userReport: boolean;
-  attendanceReport: boolean;
-  notificationReport: boolean;
-}
-
-interface AttendanceReport {
-  user_id: string;
-  user_name: string;
-  user_email: string;
-  total_appointments: number;
-  completed_appointments: number;
-  cancelled_appointments: number;
-  pending_appointments: number;
-  attendance_rate: number;
-  last_appointment: string;
-  period_start: string;
-  period_end: string;
-}
-
-interface NotificationExport {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  user_full_name: string;
-  user_email: string;
-  delegate_type: string;
-  created_at: string;
-  read: boolean;
-  appointment_time: string;
-}
-
-interface AppointmentExport {
-  id: string;
-  start_time: string;
-  delegate_type: string;
-  status: string;
-  user_name: string;
-  user_email: string;
-  created_at: string;
-}
-
-interface ReportSummary {
-  total_appointments: number;
-  total_notifications: number;
-  total_users: number;
-  average_attendance_rate: number;
-  top_delegate_type: string;
-  period_description: string;
-}
 
 export default function AdminCitas() {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [stats, setStats] = useState<AppointmentStats>({ today: 0, upcoming: 0, pending: 0, completed: 0 });
+  // Use Custom Hook
+  const {
+    appointments,
+    notifications,
+    stats,
+    users,
+    dailyStats,
+    peakHours,
+    userStats,
+    attendanceRate,
+    confirmationRate,
+    blockedSlots,
+    loadAppointments,
+    loadNotifications,
+    loadUsers,
+    calculateStats,
+    loadAdvancedStats,
+    loadBlockedSlots,
+    toggleBlockSlot
+  } = useAppointments();
+
   const [filterType, setFilterType] = useState<string>('all');
   const [filterRead, setFilterRead] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'appointments' | 'notifications' | 'stats' | 'config' | 'availability'>('appointments');
-  const [blockedSlots, setBlockedSlots] = useState<any[]>([]);
   const [availabilityDate, setAvailabilityDate] = useState<Date>(new Date());
   const [availabilityType, setAvailabilityType] = useState<'sindical' | 'prevencion'>('sindical');
 
   // Estados para filtros avanzados
-  const [users, setUsers] = useState<UserOption[]>([]);
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({
     searchTerm: '',
     selectedUser: null,
@@ -212,13 +79,6 @@ export default function AdminCitas() {
     timeFilter: 'all',
     showDatePicker: false
   });
-
-  // Estados para estadísticas mejoradas
-  const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
-  const [peakHours, setPeakHours] = useState<PeakHours[]>([]);
-  const [userStats, setUserStats] = useState<UserStats[]>([]);
-  const [attendanceRate, setAttendanceRate] = useState<AttendanceRate>({ completed: 0, total: 0, percentage: 0 });
-  const [confirmationRate, setConfirmationRate] = useState<ConfirmationRate>({ confirmed: 0, pending: 0, percentage: 0 });
 
   // Estados para configuración
   const [config, setConfig] = useState<AppointmentConfig | null>(null);
@@ -245,295 +105,24 @@ export default function AdminCitas() {
   const [exporting, setExporting] = useState<boolean>(false);
   const [attendanceReportData, setAttendanceReportData] = useState<AttendanceReport[]>([]);
   const [reportSummary, setReportSummary] = useState<ReportSummary | null>(null);
+
   const statsRef = useRef<HTMLDivElement>(null);
   const appointmentsRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    loadAppointments();
-    loadNotifications();
-    loadUsers();
-    calculateStats();
-    loadAdvancedStats();
     loadConfig();
-
-    // Suscripción en tiempo real para notificaciones
-    const notificationsSubscription = supabase
-      .channel('notifications_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
-        loadNotifications();
-      })
-      .subscribe();
-
-    return () => {
-      notificationsSubscription.unsubscribe();
-    };
   }, []);
 
   useEffect(() => {
     if (activeTab === 'availability') {
-      loadBlockedSlots();
+      loadBlockedSlots(availabilityDate, availabilityType);
     }
-  }, [activeTab, availabilityDate, availabilityType]);
+  }, [activeTab, availabilityDate, availabilityType, loadBlockedSlots]);
 
-  async function loadBlockedSlots() {
-    const dateStr = format(availabilityDate, 'yyyy-MM-dd');
-    const { data } = await supabase
-      .from('appointment_slots')
-      .select('*')
-      .eq('appointment_date', dateStr)
-      .eq('delegate_type', availabilityType)
-      .eq('status', 'blocked');
-    if (data) setBlockedSlots(data);
-    else setBlockedSlots([]);
-  }
-
-  async function toggleBlockSlot(time: string) {
-    const dateStr = format(availabilityDate, 'yyyy-MM-dd');
-    const existing = blockedSlots.find(s => s.start_time.includes(time));
-
-    if (existing) {
-      const { error } = await supabase
-        .from('appointment_slots')
-        .delete()
-        .eq('id', existing.id);
-
-      if (!error) {
-        toast.success(`Hueco ${time} desbloqueado`);
-        loadBlockedSlots();
-      }
-    } else {
-      const startIso = `${dateStr}T${time}:00`;
-      const endHour = parseInt(time.split(':')[0]) + 1;
-      const endIso = `${dateStr}T${endHour.toString().padStart(2, '0')}:${time.split(':')[1]}:00`;
-
-      const { error } = await supabase
-        .from('appointment_slots')
-        .insert([{
-          appointment_date: dateStr,
-          delegate_type: availabilityType,
-          start_time: startIso,
-          end_time: endIso,
-          status: 'blocked',
-          block_reason: 'Bloqueo manual por administrador'
-        }]);
-
-      if (!error) {
-        toast.success(`Hueco ${time} bloqueado`);
-        loadBlockedSlots();
-      }
-    }
-  }
-
-  async function loadAppointments() {
-    const { data } = await supabase
-      .from('appointments')
-      .select('*, user:profiles(id, full_name, email)')
-      .order('start_time');
-    if (data) setAppointments(data as any);
-  }
-
-  async function loadNotifications() {
-    const { data } = await supabase.from('notifications').select('*').order('created_at', { ascending: false });
-    if (data) setNotifications(data);
-  }
-
-  async function loadUsers() {
-    const { data } = await supabase
-      .from('profiles')
-      .select('id, full_name, email')
-      .order('full_name');
-    if (data) {
-      setUsers(data.map(user => ({
-        id: user.id,
-        full_name: user.full_name || 'Sin nombre',
-        email: user.email
-      })));
-    }
-  }
-
-  async function calculateStats() {
-    const now = new Date();
-    const todayStart = new Date(now.setHours(0, 0, 0, 0));
-    const todayEnd = new Date(now.setHours(23, 59, 59, 999));
-
-    // Citas hoy
-    const { count: todayCount } = await supabase
-      .from('appointments')
-      .select('*', { count: 'exact', head: true })
-      .gte('start_time', todayStart.toISOString())
-      .lte('start_time', todayEnd.toISOString());
-
-    // Citas próximas (próximos 7 días)
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    const { count: upcomingCount } = await supabase
-      .from('appointments')
-      .select('*', { count: 'exact', head: true })
-      .gte('start_time', new Date().toISOString())
-      .lte('start_time', nextWeek.toISOString());
-
-    // Citas pendientes
-    const { count: pendingCount } = await supabase
-      .from('appointments')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'pending');
-
-    // Citas completadas
-    const { count: completedCount } = await supabase
-      .from('appointments')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'completed');
-
-    setStats({
-      today: todayCount || 0,
-      upcoming: upcomingCount || 0,
-      pending: pendingCount || 0,
-      completed: completedCount || 0
-    });
-  }
-
-  async function loadAdvancedStats() {
-    // Cargar estadísticas de los últimos 30 días
-    const thirtyDaysAgo = subDays(new Date(), 30);
-    const today = new Date();
-
-    const { data: appointmentsLast30Days } = await supabase
-      .from('appointments')
-      .select('start_time, status, user_id')
-      .gte('start_time', thirtyDaysAgo.toISOString())
-      .lte('start_time', today.toISOString());
-
-    // Obtener perfiles de usuarios separately
-    const { data: allAppointmentsWithProfiles } = await supabase
-      .from('appointments')
-      .select(`
-        start_time, 
-        status, 
-        user_id,
-        profiles!appointments_user_id_fkey(full_name, email)
-      `)
-      .gte('start_time', thirtyDaysAgo.toISOString())
-      .lte('start_time', today.toISOString());
-
-    if (allAppointmentsWithProfiles) {
-      // Generar datos para gráfico de líneas (citas por día)
-      const dateInterval = eachDayOfInterval({
-        start: thirtyDaysAgo,
-        end: today
-      });
-
-      const dailyData: DailyStats[] = dateInterval.map(date => {
-        const dateString = format(date, 'yyyy-MM-dd');
-        const dayAppointments = allAppointmentsWithProfiles.filter(apt =>
-          format(parseISO(apt.start_time), 'yyyy-MM-dd') === dateString
-        );
-
-        return {
-          date: format(date, 'dd/MM'),
-          appointments: dayAppointments.length
-        };
-      });
-
-      setDailyStats(dailyData);
-
-      // Generar datos para horarios pico
-      const hoursCount: { [key: number]: number } = {};
-      allAppointmentsWithProfiles.forEach(apt => {
-        const hour = getHours(parseISO(apt.start_time));
-        hoursCount[hour] = (hoursCount[hour] || 0) + 1;
-      });
-
-      const peakHoursData: PeakHours[] = [];
-      for (let hour = 8; hour <= 20; hour++) {
-        peakHoursData.push({
-          hour,
-          count: hoursCount[hour] || 0
-        });
-      }
-      setPeakHours(peakHoursData);
-
-      // Calcular usuarios más activos
-      const userCounts: { [key: string]: { count: number; name: string; email: string; lastAppointment: string } } = {};
-
-      allAppointmentsWithProfiles.forEach((apt: any) => {
-        const userId = apt.user_id;
-        const profile = apt.profiles;
-
-        if (userId && profile && Array.isArray(profile) && profile.length > 0) {
-          const profileData = profile[0];
-          if (!userCounts[userId]) {
-            userCounts[userId] = {
-              count: 0,
-              name: profileData.full_name || 'Sin nombre',
-              email: profileData.email,
-              lastAppointment: apt.start_time
-            };
-          }
-          userCounts[userId].count++;
-
-          // Actualizar última cita si esta es más reciente
-          if (apt.start_time > userCounts[userId].lastAppointment) {
-            userCounts[userId].lastAppointment = apt.start_time;
-          }
-        }
-      });
-
-      const topUsers: UserStats[] = Object.entries(userCounts)
-        .map(([id, data]) => ({
-          id,
-          full_name: data.name,
-          email: data.email,
-          appointment_count: data.count,
-          last_appointment: data.lastAppointment
-        }))
-        .sort((a, b) => b.appointment_count - a.appointment_count)
-        .slice(0, 5);
-
-      setUserStats(topUsers);
-
-      // Calcular porcentaje de asistencia
-      const { count: completedCount } = await supabase
-        .from('appointments')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'completed');
-
-      const { count: totalCount } = await supabase
-        .from('appointments')
-        .select('*', { count: 'exact', head: true });
-
-      const completed = completedCount || 0;
-      const total = totalCount || 0;
-      const attendancePercentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-      setAttendanceRate({
-        completed,
-        total,
-        percentage: attendancePercentage
-      });
-
-      // Calcular tasa de confirmación
-      const { count: confirmedCount } = await supabase
-        .from('appointments')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'confirmed');
-
-      const { count: pendingCount } = await supabase
-        .from('appointments')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending');
-
-      const confirmed = confirmedCount || 0;
-      const pending = pendingCount || 0;
-      const confirmationPercentage = (confirmed + pending) > 0 ? Math.round((confirmed / (confirmed + pending)) * 100) : 0;
-
-      setConfirmationRate({
-        confirmed,
-        pending,
-        percentage: confirmationPercentage
-      });
-    }
-  }
+  const handleToggleBlockSlot = (time: string) => {
+    toggleBlockSlot(time, availabilityDate, availabilityType);
+  };
 
   // Funciones para configuración
   async function loadConfig() {
@@ -1253,7 +842,7 @@ export default function AdminCitas() {
                         return (
                           <button
                             key={time}
-                            onClick={() => toggleBlockSlot(time)}
+                            onClick={() => handleToggleBlockSlot(time)}
                             className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${isBlocked
                               ? 'border-red-100 bg-red-50 text-red-600'
                               : 'border-gray-100 bg-white hover:border-red-200 text-gray-700'

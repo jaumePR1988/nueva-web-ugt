@@ -1,0 +1,29 @@
+User-agent: *
+Allow: /
+
+# Bloquear páginas administrativas del sistema
+Disallow: /admin/
+Disallow: /affiliates/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /login
+Disallow: /register
+Disallow: /admin-*
+
+# Permitir archivos importantes
+Allow: /UGT-logo.jpg
+Allow: /bandera-ugt-2024.jpg
+Allow: /*.css
+Allow: /*.js
+Allow: /*.png
+Allow: /*.jpg
+Allow: /*.jpeg
+Allow: /*.svg
+Allow: /*.webp
+Allow: /*.gif
+
+# Configurar ubicación del sitemap
+Sitemap: https://ugt.towa.cat/sitemap.xml
+
+# Crawl-delay para evitar sobrecarga
+Crawl-delay: 1

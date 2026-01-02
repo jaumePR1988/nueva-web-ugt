@@ -353,7 +353,7 @@ export default function AdminAdministradores() {
                           }}
                           className="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
                         >
-                          Promover a Admin
+                          Promover / Acceso
                         </button>
                       </td>
                     </tr>
@@ -479,10 +479,10 @@ export default function AdminAdministradores() {
             <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
               <Shield className="h-10 w-10 text-green-600" />
             </div>
-            <h3 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">Elevar Privilegios</h3>
+            <h3 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">Asignar Privilegios</h3>
             <p className="text-gray-500 font-medium leading-relaxed mb-10">
-              ¿Estás seguro de promover a <strong className="text-gray-900">{selectedUser.full_name}</strong> como administrador?
-              Tendrá acceso a toda la gestión privada del sistema.
+              Vas a otorgar permisos especiales a <strong className="text-gray-900">{selectedUser.full_name}</strong>.
+              Selecciona el nivel de acceso que deseas asignar para este usuario.
             </p>
             <div className="flex flex-col gap-3">
               <div className="grid grid-cols-2 gap-3 mb-2">

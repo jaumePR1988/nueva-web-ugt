@@ -35,6 +35,7 @@ export default function Navbar() {
     { to: '/citas', label: 'Citas' },
     ...(user ? [{ to: '/documentos', label: 'Documentación' }] : []),
     { to: '/encuestas', label: 'Encuestas' },
+    { to: '/newsletter', label: 'Newsletter' },
     ...(user ? [{ to: '/afiliados/dashboard', label: 'Área Afiliados' }] : []),
   ];
 

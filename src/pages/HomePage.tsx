@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import EventCarousel from '@/components/EventCarousel';
 import { supabase, Communique, Survey } from '@/lib/supabase';
-import { Calendar, FileText, Vote, MessageSquare, QrCode, Clock, Bell, ChevronRight, ArrowRight, User } from 'lucide-react';
+import { Calendar, FileText, Vote, MessageSquare, QrCode, Clock, Bell, ChevronRight, ArrowRight, User, Mail, CheckCircle } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -275,6 +275,7 @@ export default function HomePage() {
                   { to: '/citas', label: 'Solicitar Cita', icon: Calendar },
                   { to: '/encuestas', label: 'Encuestas Activas', icon: Vote },
                   { to: '/documentos', label: 'Documentación', icon: FileText },
+                  { to: '/newsletter', label: 'Newsletter', icon: Mail },
                 ].map((item) => (
                   <Link
                     key={item.to}
@@ -316,6 +317,41 @@ export default function HomePage() {
                   <p className="text-xs text-white/60 font-medium text-center">QR temporalmente fuera de servicio</p>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Newsletter Subscription Section */}
+        <div className="mt-24 animate-in" style={{ animationDelay: '0.9s' }}>
+          <div className="glass-card overflow-hidden rounded-[2.5rem] border-blue-100 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/10 dark:to-gray-950">
+            <div className="grid grid-cols-1 lg:grid-cols-2 lg:items-center">
+              <div className="p-10 lg:p-16">
+                <div className="w-16 h-16 rounded-2xl bg-red-600 flex items-center justify-center mb-8 shadow-xl shadow-red-200 dark:shadow-none">
+                  <Mail className="h-8 w-8 text-white" />
+                </div>
+                <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-4">Newsletter UGT Towa</h2>
+                <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
+                  Mantente informado de las últimas noticias, negociaciones y eventos del sindicato directamente en tu buzón.
+                </p>
+
+                <div className="space-y-4">
+                  {[
+                    'Actualizaciones sobre negociaciones',
+                    'Convocatorias de asambleas y eventos',
+                    'Comunicados importantes del sindicato',
+                    'Noticias laborales relevantes'
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center space-x-3 text-sm font-bold text-blue-900 dark:text-blue-300">
+                      <CheckCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-10 lg:p-16 bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm border-l border-white/50 dark:border-gray-800">
+                <HomeNewsletterForm />
+              </div>
             </div>
           </div>
         </div>
@@ -409,6 +445,79 @@ function SuggestionsForm() {
       </button>
       <p className="text-xs text-center sm:text-left text-gray-400 dark:text-gray-500 font-medium">
         Al hacer clic en enviar, tu mensaje será procesado de forma anónima. No recolectamos IPs ni datos personales.
+      </p>
+    </form>
+  );
+}
+
+function HomeNewsletterForm() {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email.trim()) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('newsletter_subscribers')
+        .insert([{ email }]);
+
+      if (error) {
+        if (error.code === '23505') {
+          alert('Este email ya está suscrito');
+        } else {
+          throw error;
+        }
+      } else {
+        alert('¡Suscripción exitosa!');
+        setEmail('');
+      }
+    } catch (error) {
+      alert('Error al suscribirse');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="space-y-2">
+        <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Tu Email corporativo</label>
+        <div className="relative group">
+          <Mail className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-red-600 transition-colors" />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="tu.email@towapharmaceutical.com"
+            className="w-full pl-14 pr-6 py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-4 focus:ring-red-600/10 focus:border-red-600 outline-none transition-all text-gray-700 dark:text-gray-200 font-medium"
+            required
+          />
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full px-8 py-4 bg-red-600 text-white rounded-2xl font-black text-lg hover:bg-red-700 hover:shadow-xl hover:shadow-red-200 dark:hover:shadow-red-900/20 disabled:bg-gray-400 transform active:scale-95 transition-all duration-300 flex items-center justify-center group"
+      >
+        {loading ? (
+          <>
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-3" />
+            Procesando...
+          </>
+        ) : (
+          <>
+            Suscribirse Ahora
+            <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+          </>
+        )}
+      </button>
+
+      <p className="text-[10px] text-center text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
+        Respetamos tu privacidad. Puedes darte de baja en cualquier momento.
       </p>
     </form>
   );

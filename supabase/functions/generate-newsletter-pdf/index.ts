@@ -42,13 +42,28 @@ Deno.serve(async (req) => {
         }
 
         const newsletter = newsletters[0];
-        const htmlContent = newsletter.content?.html || newsletter.content;
+        let htmlContent = newsletter.content?.html || newsletter.content;
         const subject = newsletter.title;
 
-        // Generar PDF usando librería jspdf-html2canvas
+        // Soporte para newsletters antiguos: extraer solo el contenido del body
+        if (typeof htmlContent === 'string' && htmlContent.includes('<body')) {
+            const match = htmlContent.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+            if (match && match[1]) {
+                htmlContent = match[1];
+                // Quitar también el div container exterior si existe para permitir que el layout del PDF tome el control
+                if (htmlContent.includes('class="container"')) {
+                    const innerMatch = htmlContent.match(/<div[^>]*class="container"[^>]*>([\s\S]*)<\/div>/i);
+                    if (innerMatch && innerMatch[1]) {
+                        htmlContent = innerMatch[1];
+                    }
+                }
+            }
+        }
+
+        // Generar PDF usando vista optimizada
         // Como Deno no soporta jsPDF directamente, usaremos una aproximación con Puppeteer
         // Para este entorno, generaremos un HTML optimizado para PDF
-        
+
         const pdfOptimizedHtml = generatePdfOptimizedHtml(htmlContent, subject);
 
         return new Response(JSON.stringify({
@@ -80,7 +95,7 @@ Deno.serve(async (req) => {
 function generatePdfOptimizedHtml(htmlContent: string, subject: string): string {
     // Optimizar HTML para impresión profesional en PDF
     // Con saltos de página inteligentes y layout A4
-    
+
     const optimizedHtml = `
 <!DOCTYPE html>
 <html lang="es">
@@ -382,6 +397,6 @@ function generatePdfOptimizedHtml(htmlContent: string, subject: string): string 
 </body>
 </html>
     `.trim();
-    
+
     return optimizedHtml;
 }

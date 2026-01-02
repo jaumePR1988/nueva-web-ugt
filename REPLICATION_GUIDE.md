@@ -1,4 +1,4 @@
-# 📋 Guía Maestra de Replicación: Portal UGT
+cream# 📋 Guía Maestra de Replicación: Portal UGT
 
 Esta guía es el "manual de vuelo" para clonar este ecosistema en una nueva sede o empresa de UGT. Está diseñada para minimizar la fricción técnica y asegurar que todas las funcionalidades (Push, IA, Citas) operen desde el primer día.
 
@@ -20,7 +20,14 @@ Esta guía es el "manual de vuelo" para clonar este ecosistema en una nueva sede
 2.  **Instalar**: `npm install`
 3.  **Configurar Branding**: Edita `src/config/branding.config.ts`.
     -   Cambia `companyName`, `siglas`, y los colores hexadecimales.
-    -   Sustituye el logo en `public/ugt-towa-logo.png` (mantén el nombre o actualiza la ruta).
+3.  **Configurar Branding**: Edita `src/config/branding.config.ts`.
+    -   Cambia `companyName`, `siglas`, y los colores hexadecimales.
+    -   **IMPORTANTE (Logo):** El logo ahora se gestiona como un activo importado para evitar errores de despliegue.
+        1.  Pon tu archivo de logo (preferiblemente `.png`) en la carpeta `src/assets/`.
+        2.  Abre `src/config/branding.config.ts`.
+        3.  Modifica la línea del `import` superior para apuntar a tu nuevo archivo: `import logoImg from '../assets/TU_LOGO.png';`.
+        4.  La propiedad `logoUrl` usará automáticamente esa importación.
+    -   Elimina cualquier archivo de logo antiguo de la carpeta `public/` para evitar confusiones.
 
 ### 2. Configuración de Supabase (El Corazón)
 

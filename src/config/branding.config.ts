@@ -6,7 +6,7 @@
 export const BRANDING = {
     companyName: "UGT Towa",
     shortName: "UGT",
-    logoUrl: "/UGT-logo.jpg", // Path to the logo in the public folder
+    logoUrl: "/ugt-logo.jpg", // Path to the logo in the public folder
     primaryColor: "#dc2626",   // UGT Red
     secondaryColor: "#991b1b", // Corporate Dark Red
     accentColor: "#fef2f2",    // Light red background accent

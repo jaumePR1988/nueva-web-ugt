@@ -68,7 +68,9 @@ const ContentManagement: React.FC<ContentManagementProps> = ({
                                     required
                                 >
                                     <option value="news">Noticia / Comunicado</option>
-                                    <option value="events">Evento / Galería</option>
+                                    <option value="events">Evento</option>
+                                    <option value="gallery">Galería de Imágenes</option>
+                                    <option value="surveys">Encuesta</option>
                                     <option value="statistics">Estadística</option>
                                     <option value="directives">Directivo / Representante</option>
                                     <option value="suggestions">Sugerencia</option>

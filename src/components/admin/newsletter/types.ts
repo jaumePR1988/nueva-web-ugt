@@ -1,4 +1,4 @@
-export type ContentType = 'news' | 'events' | 'statistics' | 'directives' | 'suggestions';
+export type ContentType = 'news' | 'events' | 'statistics' | 'directives' | 'suggestions' | 'surveys' | 'gallery';
 
 export interface NewsletterContent {
     id: string;

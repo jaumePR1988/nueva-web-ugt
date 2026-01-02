@@ -3,7 +3,8 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import Navbar from '../../components/Navbar';
 import {
-  FileText, BarChart3, FileDown, Mail, Trash2
+  FileText, BarChart3, FileDown, Mail, Trash2,
+  Calendar, Image as ImageIcon, Users, MessageSquare
 } from 'lucide-react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
@@ -369,23 +370,34 @@ export default function AdminNewsletter() {
         <head>
           <title>${fullNews.title} - UGT Towa</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 0; padding: 40px; }
-            @media print { @page { size: A4; margin: 1cm; } }
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 40px; color: #333; }
+            h1, h2, h3, h4, h5, h6 { color: #e50000; break-after: avoid; }
+            p { margin-bottom: 1em; line-height: 1.6; }
+            img { max-width: 100%; height: auto; display: block; margin: 15px 0; break-inside: avoid; }
+            ul, ol { margin-bottom: 1em; }
+            li { margin-bottom: 0.5em; }
+            div, article, section, .newsletter-section { break-inside: avoid; page-break-inside: avoid; margin-bottom: 20px; }
+            @media print { 
+              @page { size: A4; margin: 1.5cm; }
+              body { padding: 0; }
+              div { break-inside: avoid; }
+            }
           </style>
         </head>
         <body>
           ${fullNews.content?.html || 'Sin contenido'}
         </body>
-      </html>
+      </html >
     `);
 
     setTimeout(() => {
       printWindow.print();
+      // printWindow.close(); // Optional: Close after print
     }, 1000);
 
     if (fullNews.status === 'draft') {
       await supabase.from('newsletter_editions').update({ status: 'published' }).eq('id', fullNews.id);
-      loadNewsletters();
+      loadNewsletters(); // Refresh state
     }
   };
 
@@ -438,11 +450,28 @@ export default function AdminNewsletter() {
   };
 
   const getContentTypeIcon = (type: ContentType) => {
-    return <FileText className="w-5 h-5 text-gray-500" />;
+    switch (type) {
+      case 'news': return <FileText className="w-5 h-5 text-blue-500" />;
+      case 'events': return <Calendar className="w-5 h-5 text-orange-500" />;
+      case 'gallery': return <ImageIcon className="w-5 h-5 text-purple-500" />;
+      case 'surveys': return <BarChart3 className="w-5 h-5 text-green-500" />;
+      case 'statistics': return <BarChart3 className="w-5 h-5 text-indigo-500" />;
+      case 'directives': return <Users className="w-5 h-5 text-teal-500" />;
+      case 'suggestions': return <MessageSquare className="w-5 h-5 text-yellow-500" />;
+      default: return <FileText className="w-5 h-5 text-gray-500" />;
+    }
   };
 
   const getContentTypeName = (type: ContentType) => {
-    const map: any = { news: 'Noticia', events: 'Evento', surveys: 'Encuesta', statistics: 'Estadística', directives: 'Directivo', suggestions: 'Sugerencia' };
+    const map: any = {
+      news: 'Noticia',
+      events: 'Evento',
+      gallery: 'Galería',
+      surveys: 'Encuesta',
+      statistics: 'Estadística',
+      directives: 'Directivo',
+      suggestions: 'Sugerencia'
+    };
     return map[type] || type;
   };
 

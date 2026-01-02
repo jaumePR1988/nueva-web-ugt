@@ -1,58 +1,95 @@
-# Guía de Replicación: Nueva Web UGT
+# 📋 Guía Maestra de Replicación: Portal UGT
 
-Esta guía detalla el proceso para replicar este portal para una nueva sede o empresa de UGT de manera eficiente.
-
-## Estrategia 1: Una Sede = Un Proyecto (Aislamiento Total)
-Esta es la opción si quieres que cada sede tenga su propia base de datos y Storage totalmente independientes.
-
-### Pasos:
-1. **Supabase**:
-   - Crea un nuevo proyecto en Supabase.
-   - Copia el esquema de la base de datos (puedes usar el botón "SQL Editor" y pegar el contenido de los scripts de migración).
-   - Configura el **Auth** (Emails, Redirect URLs).
-   - Crea los buckets de **Storage** (ej: `event_images`, `documents`).
-2. **GitHub**:
-   - Crea un nuevo repositorio basado en `nueva-web-ugt`.
-   - Configura las variables de entorno (`.env`) con las nuevas URLs y claves de Supabase.
-   - Configura los **Secrets** de GitHub para el Keep-Alive.
-3. **Personalización**:
-   - Cambia el archivo `src/config/branding.config.ts` (ver abajo) con el logo y colores de la nueva sede.
-
-## Estrategia 2: Multi-Sede (Uso Compartido)
-Esta es la opción más escalable y la que recomiendo si vas a gestionar 10+ sedes.
-
-### Pasos:
-1. **Base de Datos**:
-   - Añadimos la columna `empresa_id` a las tablas principales.
-2. **Filtro Automático**:
-   - El código detecta el subdominio o una variable y filtra automáticamente todas las consultas.
-3. **Ventajas**:
-   - No necesitas crear nuevos proyectos de Supabase.
-   - Solo un despliegue de código.
-   - Evitas problemas de inactividad (siempre habrá alguien usando alguna sede).
-
-## Herramientas de Personalización (Replicabilidad)
-
-Para que el portal sea replicable en cuestión de minutos, he centralizado los puntos clave:
-
-### 1. Identidad Visual (`src/config/branding.config.ts`)
-Modifica este archivo para cambiar:
-- **Nombre de la empresa** y siglas.
-- **Logo** (debe estar en la carpeta `public`).
-- **Colores corporativos** (Primario, Secundario, Acentos).
-- **Tipografía** y diseño de botones (bordes redondeados, etc.).
-
-### 2. Automatización de Citas
-Ya no necesitas crear cada hueco manualmente en Supabase:
-- El sistema genera automáticamente slots de **08:00 a 16:30** cada hora.
-- Solo debes configurar los **Delegados** en la tabla de perfiles (marcandolos como `is_admin`) para que puedan gestionar sus bloqueos.
-- La tabla `appointment_slots` ahora solo se usa para **bloqueos excepcionales** (vacaciones, reuniones externas).
-
-### 3. Requisitos de Infraestructura (NUEVO)
-Para una réplica funcional al 100%, asegúrate de:
-- **VAPID Keys**: Generar un par de claves para las notificaciones Push y poner la pública en el `.env`.
-- **Edge Functions**: Desplegar las funciones de la carpeta `supabase/functions`.
-- **Secrets**: Configurar `RESEND_API_KEY` (si se usa para emails) y `VAPID_PRIVATE_KEY` en los secretos de Supabase (`supabase secrets set`).
+Esta guía es el "manual de vuelo" para clonar este ecosistema en una nueva sede o empresa de UGT. Está diseñada para minimizar la fricción técnica y asegurar que todas las funcionalidades (Push, IA, Citas) operen desde el primer día.
 
 ---
-*Esta guía se actualiza a medida que añadimos nuevas funcionalidades modulares.*
+
+## 🏗️ Requisitos de Infraestructura
+
+1.  **GitHub**: Repositorio para el código (Vite + React + TS).
+2.  **Vercel**: Hosting recomendado para el frontend (conecta directamente con GitHub).
+3.  **Supabase**: Backend-as-a-Service (Base de datos, Auth, Storage y Edge Functions).
+4.  **Resend**: (Opcional) Para envío de emails transaccionales.
+
+---
+
+## 🔧 Configuración Paso a Paso
+
+### 1. Preparación del Código
+1.  **Clonar**: `git clone https://github.com/jaumePR1988/nueva-web-ugt.git`
+2.  **Instalar**: `npm install`
+3.  **Configurar Branding**: Edita `src/config/branding.config.ts`.
+    -   Cambia `companyName`, `siglas`, y los colores hexadecimales.
+    -   Sustituye el logo en `public/ugt-towa-logo.png` (mantén el nombre o actualiza la ruta).
+
+### 2. Configuración de Supabase (El Corazón)
+
+#### A. Base de Datos (SQL)
+-   Ejecuta el esquema completo en el **SQL Editor**. 
+-   > [!TIP]
+    > Si quieres una réplica exacta, exporta el esquema actual desde el panel de Supabase o solicita el archivo `schema.sql`.
+
+#### B. Autenticación
+-   Activa **Email Auth**. Desactiva "Confirm Email" si quieres un registro instantáneo para pruebas.
+-   Configura **Google Auth** (opcional pero recomendado) en `Authentication > Providers`.
+-   **Site URL**: Pon la URL de Vercel (ej: `https://tu-sede.vercel.app`).
+-   **Redirect URLs**: Añade `https://tu-sede.vercel.app/**`.
+
+#### C. Storage (Buckets)
+Crea estos buckets con **acceso público**:
+-   `event_images`: Fotos del carrusel y noticias.
+-   `documents`: PDFs, actas y boletines.
+-   `delegate_photos`: Fotos de los delegados.
+-   `notification_logos`: Miniaturas para los avisos push.
+-   `newsletter_images`: Imágenes para el gestor de boletines.
+
+#### D. Edge Functions (Lógica de Servidor)
+Desde tu terminal con el Supabase CLI instalado:
+1.  Login: `supabase login`
+2.  Link: `supabase link --project-ref tu-id-de-proyecto`
+3.  Deploy: `supabase functions deploy` (esto subirá todas las carpetas en `supabase/functions`).
+
+#### E. Secrets (Variables Seguras)
+Debes configurar estos secretos en Supabase para que las funciones operen:
+```bash
+# Notificaciones Push (VAPID)
+supabase secrets set VAPID_PUBLIC_KEY=tu_clave_publica
+supabase secrets set VAPID_PRIVATE_KEY=tu_clave_privada
+supabase secrets set VAPID_SUBJECT=mailto:tu@email.com
+
+# Email (Si usas Resend)
+supabase secrets set RESEND_API_KEY=re_123456789
+```
+
+---
+
+## 📲 Notificaciones PWA y Push
+
+Para que las notificaciones funcionen en el navegador/móvil:
+1.  Genera claves VAPID: `npx web-push generate-vapid-keys`.
+2.  Pon la **Clave Pública** en el `.env` del frontend (`VITE_VAPID_PUBLIC_KEY`).
+3.  Pon la **Clave Pública Y Privada** en los Secrets de Supabase (paso anterior).
+4.  Asegúrate de que `public/sw-notifications.js` esté presente (es el encargado de mostrar los avisos en segundo plano).
+
+---
+
+## 🚀 Checklist de Lanzamiento (Zero Bugs)
+
+- [ ] **Primer Admin**: Regístrate en la web y luego, en la tabla `profiles` de Supabase, cambia manualmente tu `role` a `'admin'`.
+- [ ] **Permisos de Storage**: Verifica que los buckets son públicos o que las políticas RLS permiten lectura (`SELECT`) a todos.
+- [ ] **Variables Vercel**: No olvides copiar todas las variables del `.env` a la configuración de Vercel.
+- [ ] **Cron Jobs**: Si quieres que el resumen de boletines sea automático, configura un HTTP Trigger (ej: GitHub Actions o Supabase Cron) que llame a la función `process-notification-queue`.
+
+---
+
+## 📈 Oportunidades de Mejora Continua
+
+Si ya tienes lo básico funcionando, aquí hay ideas para subir de nivel:
+1.  **Historial de Avisos**: Crear una página donde el usuario vea todos los avisos recibidos (no solo el push momentáneo).
+2.  **Roles Intermedios**: Añadir un rol `editor` para delegados que solo suban contenido pero no gestionen usuarios.
+3.  **Analíticas Integradas**: Conectar con Google Analytics o un dashboard de Supabase para ver qué secciones se visitan más.
+4.  **IA en Documentos**: Implementar búsqueda semántica en los PDFs usando embeddings (Supabase Vector).
+5.  **Offline Pro**: Cachear más secciones en el Service Worker para que el portal sea ultra-rápido incluso sin internet.
+
+---
+*Mantenido por el equipo de desarrollo de UGT.*

@@ -12,6 +12,7 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
   isAdmin: boolean;
+  isEditor: boolean;
   isAffiliate: boolean;
 }
 
@@ -28,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         setUser(user);
-        
+
         if (user) {
           const { data: profileData } = await supabase
             .from('profiles')
@@ -105,10 +106,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 
   const isAdmin = profile?.role === 'admin';
+  const isEditor = profile?.role === 'editor';
   const isAffiliate = profile?.is_affiliate === true;
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signIn, signUp, signOut, resetPassword, updatePassword, isAdmin, isAffiliate }}>
+    <AuthContext.Provider value={{ user, profile, loading, signIn, signUp, signOut, resetPassword, updatePassword, isAdmin, isEditor, isAffiliate }}>
       {children}
     </AuthContext.Provider>
   );

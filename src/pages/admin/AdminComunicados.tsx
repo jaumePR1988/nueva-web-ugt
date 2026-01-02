@@ -25,7 +25,8 @@ export default function AdminComunicados() {
     content: '',
     category_id: '',
     image_url: '',
-    attachments: [] as AttachmentFile[]
+    attachments: [] as AttachmentFile[],
+    sendPush: false
   });
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -224,6 +225,36 @@ export default function AdminComunicados() {
         } else {
           console.log('Comunicado creado exitosamente:', data);
           toast.success('Comunicado publicado correctamente');
+
+          // Enviar notificación push si está marcado
+          if (formData.sendPush && data && data[0]) {
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              const response = await fetch(
+                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-push-notification`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`
+                  },
+                  body: JSON.stringify({
+                    title: formData.title,
+                    message: stripHtml(formData.content).substring(0, 100) + '...',
+                    url: `/comunicados/${data[0].id}`
+                  })
+                }
+              );
+
+              if (response.ok) {
+                toast.success('Notificación push enviada');
+              }
+            } catch (err) {
+              console.error('Error al enviar push:', err);
+              toast.error('Comunicado guardado, pero falló el envío push');
+            }
+          }
+
           resetForm();
           loadCommuniques();
         }
@@ -248,7 +279,8 @@ export default function AdminComunicados() {
       content: com.content,
       category_id: com.category_id || '',
       image_url: com.image_url || '',
-      attachments: com.attachments || []
+      attachments: com.attachments || [],
+      sendPush: false
     });
     setEditingId(com.id);
     setShowForm(true);
@@ -260,7 +292,8 @@ export default function AdminComunicados() {
       content: '',
       category_id: '',
       image_url: '',
-      attachments: []
+      attachments: [],
+      sendPush: false
     });
     setEditingId(null);
     setShowForm(false);
@@ -411,6 +444,20 @@ export default function AdminComunicados() {
                   ))}
                 </div>
               )}
+            </div>
+
+            <div className="mb-6 flex items-center p-4 bg-blue-50 rounded-2xl border border-blue-100">
+              <input
+                type="checkbox"
+                id="sendPush"
+                checked={formData.sendPush}
+                onChange={e => setFormData({ ...formData, sendPush: e.target.checked })}
+                className="h-5 w-5 text-blue-600 rounded-lg border-blue-300 focus:ring-blue-600 focus:ring-offset-0 transition-all cursor-pointer"
+              />
+              <label htmlFor="sendPush" className="ml-3 cursor-pointer group">
+                <span className="block text-sm font-black text-blue-900 uppercase tracking-widest leading-none">Notificar vía Push</span>
+                <span className="block text-[10px] text-blue-600 font-bold mt-1">Enviar aviso inmediato a todos los usuarios con suscripción activa</span>
+              </label>
             </div>
 
             <div className="flex gap-2">

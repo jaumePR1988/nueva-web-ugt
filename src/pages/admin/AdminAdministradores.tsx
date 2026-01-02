@@ -22,7 +22,8 @@ export default function AdminAdministradores() {
   const [newAdmin, setNewAdmin] = useState({
     email: '',
     fullName: '',
-    password: ''
+    password: '',
+    role: 'admin' as 'admin' | 'editor'
   });
 
   useEffect(() => {
@@ -43,25 +44,25 @@ export default function AdminAdministradores() {
     }
   }
 
-  async function promoteToAdmin() {
+  async function promoteToRole(role: 'admin' | 'editor') {
     if (!selectedUser) return;
 
     setProcessing(true);
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ role: 'admin' })
+        .update({ role })
         .eq('id', selectedUser.id);
 
       if (error) throw error;
 
-      toast.success(`${selectedUser.full_name} promovido a administrador`);
+      toast.success(`${selectedUser.full_name} promovido a ${role === 'admin' ? 'administrador' : 'editor'}`);
       setShowPromoteModal(false);
       setSelectedUser(null);
       loadUsers();
     } catch (error) {
       console.error('Error al promover usuario:', error);
-      toast.error('Error al promover usuario a administrador');
+      toast.error(`Error al promover usuario a ${role}`);
     } finally {
       setProcessing(false);
     }
@@ -124,15 +125,15 @@ export default function AdminAdministradores() {
         // Actualizar el perfil para hacerlo administrador
         const { error: updateError } = await supabase
           .from('profiles')
-          .update({ role: 'admin' })
+          .update({ role: newAdmin.role })
           .eq('id', authData.user.id);
 
         if (updateError) throw updateError;
       }
 
-      toast.success('Administrador creado correctamente');
+      toast.success(newAdmin.role === 'admin' ? 'Administrador creado correctamente' : 'Editor creado correctamente');
       setShowCreateModal(false);
-      setNewAdmin({ email: '', fullName: '', password: '' });
+      setNewAdmin({ email: '', fullName: '', password: '', role: 'admin' });
       loadUsers();
     } catch (error: any) {
       console.error('Error al crear administrador:', error);
@@ -148,8 +149,9 @@ export default function AdminAdministradores() {
   );
 
   const adminCount = users.filter(u => u.role === 'admin').length;
-  const nonAdminUsers = filteredUsers.filter(u => u.role !== 'admin');
-  const adminUsers = filteredUsers.filter(u => u.role === 'admin');
+  const editorCount = users.filter(u => u.role === 'editor').length;
+  const nonAdminUsers = filteredUsers.filter(u => u.role === 'user');
+  const managementUsers = filteredUsers.filter(u => u.role === 'admin' || u.role === 'editor');
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
@@ -193,8 +195,8 @@ export default function AdminAdministradores() {
               <Shield className="h-6 w-6 text-red-600" />
             </div>
             <div>
-              <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest leading-none mb-2">Administradores</p>
-              <p className="text-3xl font-black text-red-600">{adminCount}</p>
+              <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest leading-none mb-2">Admins / Editores</p>
+              <p className="text-3xl font-black text-red-600">{adminCount + editorCount}</p>
             </div>
           </div>
 
@@ -226,15 +228,15 @@ export default function AdminAdministradores() {
         {/* Lista de Administradores */}
         <div className="bg-white rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden mb-12">
           <div className="bg-gray-50/50 px-8 py-5 border-b border-gray-100">
-            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Administradores del Sistema</h2>
+            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Equipo de Gestión (Admins y Editores)</h2>
           </div>
           {loading ? (
             <div className="text-center py-12">
-              <p className="text-gray-600">Cargando usuarios...</p>
+              <p className="text-gray-600">Cargando equipo...</p>
             </div>
-          ) : adminUsers.length === 0 ? (
+          ) : managementUsers.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-600">No hay administradores.</p>
+              <p className="text-gray-600">No hay equipo de gestión.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -253,15 +255,26 @@ export default function AdminAdministradores() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {adminUsers.map((user) => (
+                  {managementUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50/50 transition-colors group">
                       <td className="px-8 py-5">
                         <div className="flex items-center">
-                          <div className="p-2 bg-red-50 rounded-lg mr-4 group-hover:bg-red-600 transition-colors">
-                            <Shield className="h-4 w-4 text-red-600 group-hover:text-white transition-colors" />
+                          <div className={`p-2 rounded-lg mr-4 group-hover:bg-opacity-100 transition-colors ${user.role === 'admin'
+                            ? 'bg-red-50 text-red-600 group-hover:bg-red-600 group-hover:text-white'
+                            : 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white'
+                            }`}>
+                            <Shield className="h-4 w-4" />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-gray-900">{user.full_name}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-bold text-gray-900">{user.full_name}</p>
+                              <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter ${user.role === 'admin'
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-blue-100 text-blue-700'
+                                }`}>
+                                {user.role}
+                              </span>
+                            </div>
                             <p className="text-xs text-gray-400 font-medium">{user.email}</p>
                           </div>
                         </div>
@@ -406,6 +419,33 @@ export default function AdminAdministradores() {
                   />
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2 ml-1">Mínimo 6 caracteres</p>
                 </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">
+                    Rol Asignado
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setNewAdmin({ ...newAdmin, role: 'admin' })}
+                      className={`py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all ${newAdmin.role === 'admin'
+                        ? 'border-red-600 bg-red-50 text-red-600'
+                        : 'border-gray-100 bg-gray-50 text-gray-400'
+                        }`}
+                    >
+                      Administrador
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewAdmin({ ...newAdmin, role: 'editor' })}
+                      className={`py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all ${newAdmin.role === 'editor'
+                        ? 'border-blue-600 bg-blue-50 text-blue-600'
+                        : 'border-gray-100 bg-gray-50 text-gray-400'
+                        }`}
+                    >
+                      Editor
+                    </button>
+                  </div>
+                </div>
               </div>
               <div className="flex flex-col gap-3 mt-10">
                 <button
@@ -419,7 +459,7 @@ export default function AdminAdministradores() {
                   type="button"
                   onClick={() => {
                     setShowCreateModal(false);
-                    setNewAdmin({ email: '', fullName: '', password: '' });
+                    setNewAdmin({ email: '', fullName: '', password: '', role: 'admin' });
                   }}
                   disabled={processing}
                   className="w-full bg-gray-50 text-gray-500 font-black uppercase tracking-widest text-xs py-5 rounded-2xl hover:bg-gray-100 disabled:opacity-50 transition-all"
@@ -445,13 +485,22 @@ export default function AdminAdministradores() {
               Tendrá acceso a toda la gestión privada del sistema.
             </p>
             <div className="flex flex-col gap-3">
-              <button
-                onClick={promoteToAdmin}
-                disabled={processing}
-                className="w-full bg-green-600 text-white font-black uppercase tracking-widest text-xs py-5 rounded-2xl hover:bg-green-700 disabled:opacity-50 transition-all shadow-xl shadow-green-100"
-              >
-                {processing ? 'Procesando...' : 'Confirmar Ascenso'}
-              </button>
+              <div className="grid grid-cols-2 gap-3 mb-2">
+                <button
+                  onClick={() => promoteToRole('admin')}
+                  disabled={processing}
+                  className="bg-red-600 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-2xl hover:bg-red-700 disabled:opacity-50 transition-all shadow-lg shadow-red-100"
+                >
+                  Hacer Admin
+                </button>
+                <button
+                  onClick={() => promoteToRole('editor')}
+                  disabled={processing}
+                  className="bg-blue-600 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-2xl hover:bg-blue-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-100"
+                >
+                  Hacer Editor
+                </button>
+              </div>
               <button
                 onClick={() => {
                   setShowPromoteModal(false);

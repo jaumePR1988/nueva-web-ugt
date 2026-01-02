@@ -7,7 +7,7 @@ interface AdminRouteProps {
 }
 
 export default function AdminRoute({ children }: AdminRouteProps) {
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading, isAdmin, isEditor } = useAuth();
 
   if (loading) {
     return (
@@ -21,7 +21,7 @@ export default function AdminRoute({ children }: AdminRouteProps) {
     return <Navigate to="/login" replace />;
   }
 
-  if (!isAdmin) {
+  if (!isAdmin && !isEditor) {
     return <Navigate to="/" replace />;
   }
 

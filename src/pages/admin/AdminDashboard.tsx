@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard, FileText, Calendar, Vote, Users, MessageSquare,
   Tag, FolderOpen, Inbox, BarChart3, FolderTree, QrCode,
@@ -13,6 +14,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export default function AdminDashboard() {
+  const { isEditor } = useAuth();
   const [stats, setStats] = useState({
     communiques: 0,
     appointments: 0,
@@ -88,6 +90,13 @@ export default function AdminDashboard() {
   const filteredItems = activeCategory === 'all'
     ? menuItems
     : menuItems.filter(item => item.category === activeCategory);
+
+  const finalItems = isEditor
+    ? filteredItems.filter(item =>
+      (item.category === 'content' || item.category === 'config') &&
+      item.to !== '/admin/notificaciones'
+    )
+    : filteredItems;
 
   const categories = [
     { id: 'all', label: 'Todo', icon: LayoutDashboard },
@@ -190,8 +199,8 @@ export default function AdminDashboard() {
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id as any)}
                 className={`flex items-center space-x-2 px-4 py-2 rounded-2xl font-bold text-sm transition-all whitespace-nowrap shadow-sm border ${activeCategory === cat.id
-                    ? 'bg-red-600 text-white border-red-600 shadow-red-200'
-                    : 'bg-white text-gray-500 border-gray-100 hover:border-red-200 hover:text-red-600'
+                  ? 'bg-red-600 text-white border-red-600 shadow-red-200'
+                  : 'bg-white text-gray-500 border-gray-100 hover:border-red-200 hover:text-red-600'
                   }`}
               >
                 <cat.icon className="h-4 w-4" />
@@ -202,7 +211,7 @@ export default function AdminDashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[400px]">
-          {filteredItems.map(item => (
+          {finalItems.map(item => (
             <Link
               key={item.to}
               to={item.to}

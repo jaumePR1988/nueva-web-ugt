@@ -1,12 +1,9 @@
-/**
- * Branding Configuration
- * Use this file to customize the identity of each replicated portal.
- */
+import logoImg from '../assets/logo.png';
 
 export const BRANDING = {
     companyName: "UGT Towa",
     shortName: "UGT",
-    logoUrl: "/ugt-logo.png", // Path to the logo in the public folder
+    logoUrl: logoImg, // Using imported asset to ensure bundler processing
     primaryColor: "#dc2626",   // UGT Red
     secondaryColor: "#991b1b", // Corporate Dark Red
     accentColor: "#fef2f2",    // Light red background accent
